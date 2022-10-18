@@ -31,6 +31,8 @@ npx saddle -n rinkeby script token:verify 0x19B674715cD20626415C738400FDd0d32D68
   if (!conf) {
     return printUsage();
   }
+  // console.log(env);
+  env['ETHERSCAN_API_KEY'] = "VPKGQBJVX2TENCV9BNA851PAU6X5B6KT6T";
   let etherscanApiKey = env['ETHERSCAN_API_KEY'];
   if (!etherscanApiKey) {
     console.error("Missing required $ETHERSCAN_API_KEY env variable.");

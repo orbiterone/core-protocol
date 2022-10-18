@@ -21,6 +21,7 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "bignumber.js": "9.0.0",
+    "esbuild": "^0.15.9",
     "jest-diff": "^26.4.2",
     "jest-junit": "^11.1.0",
     "prettier": "^1.19.0",
@@ -28,6 +29,7 @@
     "solparse": "^2.2.8"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^4.7.3",
     "@solidity-parser/parser": "^0.13.2",
     "eth-saddle": "^0.1.25"
   },

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.10;
 
-import "../../contracts/Governance/Comp.sol";
+import "../../contracts/Governance/Orbiter.sol";
 
-contract CompScenario is Comp {
-    constructor(address account) Comp(account) {}
+contract CompScenario is Orbiter {
+    constructor(address account) Orbiter(account) {}
 
     function transferScenario(address[] calldata destinations, uint256 amount) external returns (bool) {
         for (uint i = 0; i < destinations.length; i++) {

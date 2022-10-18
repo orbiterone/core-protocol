@@ -43,3 +43,5 @@ junit.xml
 .saddle_history
 node_modules_tmp
 .idea
+.ethereum
+.circleci

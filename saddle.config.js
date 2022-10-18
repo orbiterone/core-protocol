@@ -83,8 +83,8 @@ module.exports = {
     goerli: {
       providers: [
         {env: "PROVIDER"},
-        {file: "~/.ethereum/goerli-url"},                    // Load from given file with contents as the URL (e.g. https://infura.io/api-key)
-        {http: "https://goerli-eth.compound.finance"}
+        // {file: "~/.ethereum/goerli-url"},                    // Load from given file with contents as the URL (e.g. https://infura.io/api-key)
+        {http: "https://eth-goerli.g.alchemy.com/v2/wBPsUXqwOlWazBQ0E_Vci60SZECCKH4E"}
       ],
       web3: {
         gas: [
@@ -103,7 +103,7 @@ module.exports = {
       accounts: [
         {env: "ACCOUNT"},
         {file: "~/.ethereum/goerli"},                         // Load from given file with contents as the private key (e.g. 0x...)
-        {unlocked: 0}
+        // {unlocked: 0}
       ]
     },
     ropsten: {
@@ -207,6 +207,30 @@ module.exports = {
         {env: "ACCOUNT"},
         {file: `~/.ethereum/mainnet-${process.env['KEY']}`},
         {file: "~/.ethereum/mainnet"}                        // Load from given file with contents as the private key (e.g. 0x...)
+      ]
+    },
+    moonbase: {
+      providers: [
+        {env: "PROVIDER"},
+        {http: "https://rpc.api.moonbase.moonbeam.network"}
+      ],
+      web3: {
+        gas: [
+          {env: "GAS"},
+          {default: "12990000"}
+        ],
+        gas_price: [
+          {env: "GAS_PRICE"},
+          {default: "3000000000"}
+        ],
+        options: {
+          transactionConfirmationBlocks: 1,
+          transactionBlockTimeout: 5
+        }
+      },
+      accounts: [
+        {env: "ACCOUNT"},
+        {file: "./.ethereum/moonbase"}                         // Load from given file with contents as the private key (e.g. 0x...)
       ]
     },
   },

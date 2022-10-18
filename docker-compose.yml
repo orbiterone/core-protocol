@@ -1,0 +1,12 @@
+version: "3.0"
+
+services:
+  orbiter:
+    platform: linux/amd64
+    build: .
+    restart: always
+    container_name: orbiter-app
+    volumes:
+      - ./:/var/www/orbiter:delegated
+    stdin_open: true
+    tty: true

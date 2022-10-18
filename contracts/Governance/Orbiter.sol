@@ -1,10 +1,25 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+contract Orbiter {
+    /// @notice EIP-20 token name for this token
+    string public constant name = "Orbiter";
 
-contract Orbiter is ERC20, Ownable {
+    /// @notice EIP-20 token symbol for this token
+    string public constant symbol = "ORBIT";
+
+    /// @notice EIP-20 token decimals for this token
+    uint8 public constant decimals = 18;
+
+    /// @notice Total number of tokens in circulation
+    uint256 public constant totalSupply = 10000000e18; // 10 million Comp
+
+    /// @notice Allowance amounts on behalf of others
+    mapping(address => mapping(address => uint96)) internal allowances;
+
+    /// @notice Official record of token balances for each account
+    mapping(address => uint96) internal balances;
+
     /// @notice A record of each accounts delegate
     mapping(address => address) public delegates;
 
@@ -47,8 +62,120 @@ contract Orbiter is ERC20, Ownable {
         uint256 newBalance
     );
 
-    constructor(uint256 initialSupply) ERC20("Orbiter", "ORBIT") {
-        _mint(msg.sender, initialSupply);
+    /// @notice The standard EIP-20 transfer event
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+
+    /// @notice The standard EIP-20 approval event
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 amount
+    );
+
+    /**
+     * @notice Construct a new Comp token
+     * @param account The initial account to grant all the tokens
+     */
+    constructor(address account) public {
+        balances[account] = uint96(totalSupply);
+        emit Transfer(address(0), account, totalSupply);
+    }
+
+    /**
+     * @notice Get the number of tokens `spender` is approved to spend on behalf of `account`
+     * @param account The address of the account holding the funds
+     * @param spender The address of the account spending the funds
+     * @return The number of tokens approved
+     */
+    function allowance(address account, address spender)
+        external
+        view
+        returns (uint256)
+    {
+        return allowances[account][spender];
+    }
+
+    /**
+     * @notice Approve `spender` to transfer up to `amount` from `src`
+     * @dev This will overwrite the approval amount for `spender`
+     *  and is subject to issues noted [here](https://eips.ethereum.org/EIPS/eip-20#approve)
+     * @param spender The address of the account which may transfer tokens
+     * @param rawAmount The number of tokens that are approved (2^256-1 means infinite)
+     * @return Whether or not the approval succeeded
+     */
+    function approve(address spender, uint256 rawAmount)
+        external
+        returns (bool)
+    {
+        uint96 amount;
+        if (rawAmount == type(uint256).max) {
+            amount = type(uint96).max;
+        } else {
+            amount = safe96(rawAmount, "Comp::approve: amount exceeds 96 bits");
+        }
+
+        allowances[msg.sender][spender] = amount;
+
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    /**
+     * @notice Get the number of tokens held by the `account`
+     * @param account The address of the account to get the balance of
+     * @return The number of tokens held
+     */
+    function balanceOf(address account) external view returns (uint256) {
+        return balances[account];
+    }
+
+    /**
+     * @notice Transfer `amount` tokens from `msg.sender` to `dst`
+     * @param dst The address of the destination account
+     * @param rawAmount The number of tokens to transfer
+     * @return Whether or not the transfer succeeded
+     */
+    function transfer(address dst, uint256 rawAmount) external returns (bool) {
+        uint96 amount = safe96(
+            rawAmount,
+            "Comp::transfer: amount exceeds 96 bits"
+        );
+        _transferTokens(msg.sender, dst, amount);
+        return true;
+    }
+
+    /**
+     * @notice Transfer `amount` tokens from `src` to `dst`
+     * @param src The address of the source account
+     * @param dst The address of the destination account
+     * @param rawAmount The number of tokens to transfer
+     * @return Whether or not the transfer succeeded
+     */
+    function transferFrom(
+        address src,
+        address dst,
+        uint256 rawAmount
+    ) external returns (bool) {
+        address spender = msg.sender;
+        uint96 spenderAllowance = allowances[src][spender];
+        uint96 amount = safe96(
+            rawAmount,
+            "Comp::approve: amount exceeds 96 bits"
+        );
+
+        if (spender != src && spenderAllowance != type(uint96).max) {
+            uint96 newAllowance = sub96(
+                spenderAllowance,
+                amount,
+                "Comp::transferFrom: transfer amount exceeds spender allowance"
+            );
+            allowances[src][spender] = newAllowance;
+
+            emit Approval(src, spender, newAllowance);
+        }
+
+        _transferTokens(src, dst, amount);
+        return true;
     }
 
     /**
@@ -79,7 +206,7 @@ contract Orbiter is ERC20, Ownable {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
-                keccak256(bytes(name())),
+                keccak256(bytes(name)),
                 getChainId(),
                 address(this)
             )
@@ -93,15 +220,15 @@ contract Orbiter is ERC20, Ownable {
         address signatory = ecrecover(digest, v, r, s);
         require(
             signatory != address(0),
-            "Orbit::delegateBySig: invalid signature"
+            "Comp::delegateBySig: invalid signature"
         );
         require(
             nonce == nonces[signatory]++,
-            "Orbit::delegateBySig: invalid nonce"
+            "Comp::delegateBySig: invalid nonce"
         );
         require(
             block.timestamp <= expiry,
-            "Orbit::delegateBySig: signature expired"
+            "Comp::delegateBySig: signature expired"
         );
         return _delegate(signatory, delegatee);
     }
@@ -131,7 +258,7 @@ contract Orbiter is ERC20, Ownable {
     {
         require(
             blockNumber < block.number,
-            "Orbit::getPriorVotes: not yet determined"
+            "Comp::getPriorVotes: not yet determined"
         );
 
         uint32 nCheckpoints = numCheckpoints[account];
@@ -167,12 +294,41 @@ contract Orbiter is ERC20, Ownable {
 
     function _delegate(address delegator, address delegatee) internal {
         address currentDelegate = delegates[delegator];
-        uint96 delegatorBalance = uint96(balanceOf(delegator));
+        uint96 delegatorBalance = balances[delegator];
         delegates[delegator] = delegatee;
 
         emit DelegateChanged(delegator, currentDelegate, delegatee);
 
         _moveDelegates(currentDelegate, delegatee, delegatorBalance);
+    }
+
+    function _transferTokens(
+        address src,
+        address dst,
+        uint96 amount
+    ) internal {
+        require(
+            src != address(0),
+            "Comp::_transferTokens: cannot transfer from the zero address"
+        );
+        require(
+            dst != address(0),
+            "Comp::_transferTokens: cannot transfer to the zero address"
+        );
+
+        balances[src] = sub96(
+            balances[src],
+            amount,
+            "Comp::_transferTokens: transfer amount exceeds balance"
+        );
+        balances[dst] = add96(
+            balances[dst],
+            amount,
+            "Comp::_transferTokens: transfer amount overflows"
+        );
+        emit Transfer(src, dst, amount);
+
+        _moveDelegates(delegates[src], delegates[dst], amount);
     }
 
     function _moveDelegates(
@@ -189,7 +345,7 @@ contract Orbiter is ERC20, Ownable {
                 uint96 srcRepNew = sub96(
                     srcRepOld,
                     amount,
-                    "Orbit::_moveVotes: vote amount underflows"
+                    "Comp::_moveVotes: vote amount underflows"
                 );
                 _writeCheckpoint(srcRep, srcRepNum, srcRepOld, srcRepNew);
             }
@@ -202,7 +358,7 @@ contract Orbiter is ERC20, Ownable {
                 uint96 dstRepNew = add96(
                     dstRepOld,
                     amount,
-                    "Orbit::_moveVotes: vote amount overflows"
+                    "Comp::_moveVotes: vote amount overflows"
                 );
                 _writeCheckpoint(dstRep, dstRepNum, dstRepOld, dstRepNew);
             }
@@ -217,7 +373,7 @@ contract Orbiter is ERC20, Ownable {
     ) internal {
         uint32 blockNumber = safe32(
             block.number,
-            "Orbit::_writeCheckpoint: block number exceeds 32 bits"
+            "Comp::_writeCheckpoint: block number exceeds 32 bits"
         );
 
         if (
@@ -279,27 +435,5 @@ contract Orbiter is ERC20, Ownable {
             chainId := chainid()
         }
         return chainId;
-    }
-
-    function multisend(address[] memory to, uint256[] memory values)
-        external
-        onlyOwner
-        returns (uint256)
-    {
-        require(to.length == values.length);
-        require(to.length < 100);
-        for (uint256 i; i < to.length; i++) {
-            transfer(to[i], values[i]);
-        }
-        return (to.length);
-    }
-
-    function burnTokens(uint256 amount)
-        external
-        onlyOwner
-        returns (bool success)
-    {
-        _burn(msg.sender, amount);
-        return true;
     }
 }

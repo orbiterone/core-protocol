@@ -128,11 +128,10 @@ contract Comptroller is
     // No collateralFactorMantissa may exceed this value
     uint256 internal constant collateralFactorMaxMantissa = 0.9e18; // 0.9
 
-    OrbiterInterface Orbiter;
+    address ORBITER = 0xe5ABf4fcE02fbb3b47b5704E198F947433BFaEEd;
 
-    constructor(address _address) {
+    constructor() {
         admin = msg.sender;
-        Orbiter = OrbiterInterface(_address);
     }
 
     /*** Assets You Are In ***/
@@ -428,7 +427,7 @@ contract Comptroller is
         address redeemer,
         uint256 redeemAmount,
         uint256 redeemTokens
-    ) external pure override {
+    ) external override {
         // Shh - currently unused
         cToken;
         redeemer;
@@ -1817,9 +1816,10 @@ contract Comptroller is
         internal
         returns (uint256)
     {
-        uint256 compRemaining = Orbiter.balanceOf(address(this));
+        OrbiterInterface Orbit = OrbiterInterface(ORBITER);
+        uint256 compRemaining = Orbit.balanceOf(address(this));
         if (amount > 0 && amount <= compRemaining) {
-            Orbiter.transfer(user, amount);
+            Orbit.transfer(user, amount);
             return 0;
         }
         return amount;
@@ -1917,8 +1917,8 @@ contract Comptroller is
      * @notice Return the address of the COMP token
      * @return The address of COMP
      */
-    function getOrbiterAddress() public view virtual returns (address) {
-        return address(Orbiter);
+    function getCompAddress() public view virtual returns (address) {
+        return ORBITER;
     }
 
     function setOrbiterContractAddress(address _address)
@@ -1932,7 +1932,7 @@ contract Comptroller is
                     FailureInfo.SET_PRICE_ORACLE_OWNER_CHECK
                 );
         }
-        Orbiter = OrbiterInterface(_address);
+        ORBITER = _address;
 
         return uint256(Error.NO_ERROR);
     }
