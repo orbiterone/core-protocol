@@ -1,8 +1,39 @@
 #!/usr/bin/env yarn run repl -s
 -- Deploys new Comptroller with some ERC20 and some cTokens
 
+-- Now deploy some ERC-20 faucet tokens
+Gate (Erc20 AVAX Address) (Erc20 Deploy Existing AVAX "0x0601fB9F224cb2Cf5F5dB7854405486760B2d1D6" "Avalanche Token")
+Gate (Erc20 BNB Address) (Erc20 Deploy Existing BNB "0x9B632Ac04414f8558a1000cBB70c5358322f5a7E" "Binance")
+Gate (Erc20 BUSD Address) (Erc20 Deploy Existing BUSD "0xde1fcd9f17668D4cdFF49307ccb63848ddefF1aA" "Binance-Peg BUSD Token")
+Gate (Erc20 LINK Address) (Erc20 Deploy Existing LINK "0x695A7c737bEe3A9BeC96686f9cDf16DA4611090F" "ChainLink Token")
+Gate (Erc20 DAI Address) (Erc20 Deploy Existing DAI "0xc74a0242222A1501F0D1d9EC78a3d00562f70bC0" "Dai Stablecoin")
+Gate (Erc20 ETH Address) (Erc20 Deploy Existing ETH "0x90fBa273dd99468c6658CFfeC8Fe5cA185f1AE51" "Ethereum")
+Gate (Erc20 FTM Address) (Erc20 Deploy Existing FTM "0x4Dcef85aCFf5E116e7A79555bC6f7D33948E1Dc3" "Fantom Token")
+Gate (Erc20 FRAX Address) (Erc20 Deploy Existing FRAX "0xF51569d2bb22d7D66C4691270d232e9f1187A09A" "Frax")
+Gate (Erc20 USDT Address) (Erc20 Deploy Existing USDT "0xd693699975EbbCcCC21708ECaD4d5CC05097c8e8" "Tether USD")
+Gate (Erc20 USDC Address) (Erc20 Deploy Existing USDC "0xCDd33698AaBF17Ee5A3aA696dAde2Be8BbE7fbE0" "USD Coin")
+Gate (Erc20 WBTC Address) (Erc20 Deploy Existing WBTC "0x2C2623499EcCBec2536d2882029f9270DDE982a7" "Wrapped BTC")
+Gate (Erc20 xcKSM Address) (Erc20 Deploy Existing xcKSM "0xD2DcC22168441D359814707B30cCE823a166649f" "xcKSM")
+Gate (Erc20 ORBIT Address) (Erc20 Deploy Existing ORBIT "0x734EbdbB1258e91Db663a9D5740cc62326ada02a" "Orbiter")
+
+
 -- Now deploy our cTokens
-Gate (CToken cORBIT Address) (CToken Deploy CErc20 cORBIT "Orbiter ORBIT" (Erc20 ORBIT Address) (Comptroller Address) (InterestRateModel Base200bps_Slope3000bps Address) 0.2e9 8 "0x99aC7fA4e9D2D0F0A75EE16E9186839880DaA57E")
+Gate (CToken oMOVR Address) (CToken Deploy CEther oMOVR "Orbiter MOVR" (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16)
+Gate(CToken oAVAX Address) (CToken Deploy CErc20Delegator oAVAX "Orbiter AVAX" (Erc20 AVAX Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oBNB Address) (CToken Deploy CErc20Delegator oBNB "Orbiter BNB" (Erc20 BNB Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oBUSD Address) (CToken Deploy CErc20Delegator oBUSD "Orbiter BUSD" (Erc20 BUSD Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oLINK Address) (CToken Deploy CErc20Delegator oLINK "Orbiter LINK" (Erc20 LINK Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oDAI Address) (CToken Deploy CErc20Delegator oDAI "Orbiter DAI" (Erc20 DAI Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oETH Address) (CToken Deploy CErc20Delegator oETH "Orbiter ETH" (Erc20 ETH Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oFTM Address) (CToken Deploy CErc20Delegator oFTM "Orbiter FTM" (Erc20 FTM Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oFRAX Address) (CToken Deploy CErc20Delegator oFRAX "Orbiter FRAX" (Erc20 FRAX Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oUSDT Address) (CToken Deploy CErc20Delegator oUSDT "Orbiter USDT" (Erc20 USDT Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oUSDC Address) (CToken Deploy CErc20Delegator oUSDC "Orbiter USDC" (Erc20 USDC Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oWBTC Address) (CToken Deploy CErc20Delegator oWBTC "Orbiter WBTC" (Erc20 WBTC Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oKSM Address) (CToken Deploy CErc20Delegator oKSM "Orbiter KSM" (Erc20 xcKSM Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken oORBIT Address) (CToken Deploy CErc20Delegator oORBIT "Orbiter ORBIT" (Erc20 ORBIT Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
 
+-- Deploy Maximillion
+Gate (Maximillion Address) (Maximillion Deploy oMOVR)
 
-Print "Deployed Comptroller and cTokens: cETH, cBAT, cDAI, cREP, cUSDC and cZRX"
+Print "Deployed Comptroller and oTokens: oMOVR, oAVAX, oBNB, oBUSD, oBUSD, oLINK, oDAI, oETH, oFTM, oFRAX, oUSDT, oUSDC, oWBTC, oKSM and oORBIT"
