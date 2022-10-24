@@ -86,7 +86,7 @@ contract ChainlinkOracle is PriceOracle {
         external
         onlyAdmin
     {
-        address asset = address(CErc20(address(mToken)).underlying());
+        address asset = _getUnderlyingAddress(mToken);
         emit PricePosted(
             asset,
             prices[asset],
@@ -94,6 +94,20 @@ contract ChainlinkOracle is PriceOracle {
             underlyingPriceMantissa
         );
         prices[asset] = underlyingPriceMantissa;
+    }
+
+    function _getUnderlyingAddress(CToken mToken)
+        private
+        view
+        returns (address)
+    {
+        address asset;
+        if (compareStrings(mToken.symbol(), "oMOVR")) {
+            asset = 0x0000000000000000000000000000000000000000;
+        } else {
+            asset = address(CErc20(address(mToken)).underlying());
+        }
+        return asset;
     }
 
     function setDirectPrice(address asset, uint256 price) external onlyAdmin {
@@ -134,5 +148,14 @@ contract ChainlinkOracle is PriceOracle {
     modifier onlyAdmin() {
         require(msg.sender == admin, "only admin may call");
         _;
+    }
+
+    function compareStrings(string memory a, string memory b)
+        internal
+        pure
+        returns (bool)
+    {
+        return (keccak256(abi.encodePacked((a))) ==
+            keccak256(abi.encodePacked((b))));
     }
 }
