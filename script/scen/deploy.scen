@@ -1,6 +1,9 @@
 #!/usr/bin/env yarn run repl -s
 -- Deploys new Comptroller with some ERC20 and some cTokens
 
+-- Next a comptroller
+Gate (Comptroller Address) (Comptroller Deploy Comptroller)
+
 -- Now deploy some ERC-20 faucet tokens
 Gate (Erc20 AVAX Address) (Erc20 Deploy Existing AVAX "0x0601fB9F224cb2Cf5F5dB7854405486760B2d1D6" "Avalanche Token")
 Gate (Erc20 BNB Address) (Erc20 Deploy Existing BNB "0x9B632Ac04414f8558a1000cBB70c5358322f5a7E" "Binance")

@@ -19,8 +19,8 @@ contract SimplePriceOracle is PriceOracle {
         returns (address)
     {
         address asset;
-        if (compareStrings(cToken.symbol(), "cETH")) {
-            asset = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+        if (compareStrings(cToken.symbol(), "oMOVR")) {
+            asset = 0x0000000000000000000000000000000000000000;
         } else {
             asset = address(CErc20(address(cToken)).underlying());
         }
