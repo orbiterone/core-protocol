@@ -2,7 +2,7 @@
     "Contracts": {
         "FRAX": "0xF51569d2bb22d7D66C4691270d232e9f1187A09A",
         "BUSD": "0xde1fcd9f17668D4cdFF49307ccb63848ddefF1aA",
-        "PriceOracle": "0x871B6204Eb9f6243ca19EEC9691720eD5D8BeBdb",
+        "PriceOracle": "0x32fe93EAa774f2de4a8ACD8c332aD4FaD1Fc2844",
         "oBNB": "0x6994B3Fd646800aa25F56140B7C1C9126adc0DA6",
         "Maximillion": "0x01AfCF9290eE60f918bff0bdfE762D660Ef9376F",
         "oLINK": "0x617011B6108470FE404Aae3caf7e699f3a573586",
@@ -55,7 +55,7 @@
     },
     "PriceOracle": {
         "description": "Simple Price Oracle",
-        "address": "0x871B6204Eb9f6243ca19EEC9691720eD5D8BeBdb"
+        "address": "0x32fe93EAa774f2de4a8ACD8c332aD4FaD1Fc2844"
     },
     "Maximillion": {
         "description": "Maximillion",
