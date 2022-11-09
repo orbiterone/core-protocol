@@ -27,11 +27,9 @@ contract FaucetOrbiter is Ownable {
             "FaucetOrbiter::constructor: Markets and limits must be the same length."
         );
 
-        address[] memory _markets = new address[](markets.length);
-        uint256[] memory _limits = new uint256[](limits.length);
-        for (uint256 i = 0; i < _markets.length; i++) {
-            address m = _markets[i];
-            uint256 l = _limits[i];
+        for (uint256 i = 0; i < markets.length; i++) {
+            address m = markets[i];
+            uint256 l = limits[i];
             require(l > 0, "FaucetOrbiter::constructor: Limit must be more 0");
             marketLimit[m] = l;
         }
