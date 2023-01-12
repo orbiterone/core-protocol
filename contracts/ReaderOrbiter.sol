@@ -97,7 +97,11 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
     function marketInfoByAccount(address _account)
         public
         view
-        returns (MarketUserInfo memory, MarketSupplyInfo[] memory, MarketBorrowInfo[] memory)
+        returns (
+            MarketUserInfo memory,
+            MarketSupplyInfo[] memory,
+            MarketBorrowInfo[] memory
+        )
     {
         CToken[] memory supportMarkets = comptroller.getAllMarkets();
         PriceOracle oracle = comptroller.oracle();
@@ -105,8 +109,12 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
         AccountLiquidityLocalVars memory vars; // Holds all our calculation results
 
         MarketUserInfo memory marketInfo;
-        MarketSupplyInfo[] memory supplied = new MarketSupplyInfo[](supportMarkets.length);
-        MarketBorrowInfo[] memory borrowed = new MarketBorrowInfo[](supportMarkets.length);
+        MarketSupplyInfo[] memory supplied = new MarketSupplyInfo[](
+            supportMarkets.length
+        );
+        MarketBorrowInfo[] memory borrowed = new MarketBorrowInfo[](
+            supportMarkets.length
+        );
 
         for (uint256 i = 0; i < supportMarkets.length; i++) {
             CToken asset = supportMarkets[i];
@@ -155,7 +163,6 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
                     vars.sumCollateral
                 );
             }
-            
 
             vars.sumBorrowPlusEffects = mul_ScalarTruncateAddUInt(
                 vars.oraclePrice,
@@ -176,13 +183,16 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
         (, marketInfo.availableToBorrow, ) = comptroller.getAccountLiquidity(
             _account
         );
-        marketInfo.availableToWithdraw = mul_ScalarTruncate(
-            Exp({mantissa: marketInfo.availableToBorrow}),
-            div_(
-                Exp({mantissa: marketInfo.totalSupply}),
-                Exp({mantissa: marketInfo.totalCollateral})
-            ).mantissa
-        );
+
+        if (marketInfo.totalCollateral > 0) {
+            marketInfo.availableToWithdraw = mul_ScalarTruncate(
+                Exp({mantissa: marketInfo.availableToBorrow}),
+                div_(
+                    Exp({mantissa: marketInfo.totalSupply}),
+                    Exp({mantissa: marketInfo.totalCollateral})
+                ).mantissa
+            );
+        }
 
         return (marketInfo, supplied, borrowed);
     }
