@@ -45,3 +45,4 @@ node_modules_tmp
 .idea
 .ethereum
 .circleci
+.vscode
