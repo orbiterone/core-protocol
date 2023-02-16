@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import "./CToken.sol";
 import "./PriceOracle.sol";
+import "./IncentiveInterface.sol";
 
 contract UnitrollerAdminStorage {
     /**
@@ -31,6 +32,11 @@ contract ComptrollerV1Storage is UnitrollerAdminStorage {
      * @notice Oracle which gives the price of any given asset
      */
     PriceOracle public oracle;
+
+    /**
+     * @notice Incentive
+     */
+    IncentiveInterface public incentive;
 
     /**
      * @notice Multiplier used to calculate the maximum repayAmount when liquidating a borrow

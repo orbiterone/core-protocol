@@ -53,6 +53,12 @@ contract Comptroller is
         PriceOracle newPriceOracle
     );
 
+    /// @notice Emitted when incentive is changed
+    event NewIncentive(
+        IncentiveInterface oldInscentive,
+        IncentiveInterface newInscentive
+    );
+
     /// @notice Emitted when pause guardian is changed
     event NewPauseGuardian(address oldPauseGuardian, address newPauseGuardian);
 
@@ -327,6 +333,9 @@ contract Comptroller is
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
         distributeSupplierComp(cToken, minter);
+        if (address(incentive) != address(0)) {
+            incentive.distributeSupplier(cToken, minter);
+        }
 
         return uint256(Error.NO_ERROR);
     }
@@ -376,6 +385,9 @@ contract Comptroller is
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
         distributeSupplierComp(cToken, redeemer);
+        if (address(incentive) != address(0)) {
+            incentive.distributeSupplier(cToken, redeemer);
+        }
 
         return uint256(Error.NO_ERROR);
     }
@@ -504,6 +516,9 @@ contract Comptroller is
         Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
         updateCompBorrowIndex(cToken, borrowIndex);
         distributeBorrowerComp(cToken, borrower, borrowIndex);
+        if (address(incentive) != address(0)) {
+            incentive.distributeBorrower(cToken, borrower);
+        }
 
         return uint256(Error.NO_ERROR);
     }
@@ -557,6 +572,9 @@ contract Comptroller is
         Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
         updateCompBorrowIndex(cToken, borrowIndex);
         distributeBorrowerComp(cToken, borrower, borrowIndex);
+        if (address(incentive) != address(0)) {
+            incentive.distributeBorrower(cToken, borrower);
+        }
 
         return uint256(Error.NO_ERROR);
     }
@@ -717,6 +735,10 @@ contract Comptroller is
         updateCompSupplyIndex(cTokenCollateral);
         distributeSupplierComp(cTokenCollateral, borrower);
         distributeSupplierComp(cTokenCollateral, liquidator);
+        if (address(incentive) != address(0)) {
+            incentive.distributeSupplier(cTokenCollateral, borrower);
+            incentive.distributeSupplier(cTokenCollateral, liquidator);
+        }
 
         return uint256(Error.NO_ERROR);
     }
@@ -777,6 +799,10 @@ contract Comptroller is
         updateCompSupplyIndex(cToken);
         distributeSupplierComp(cToken, src);
         distributeSupplierComp(cToken, dst);
+        if (address(incentive) != address(0)) {
+            incentive.distributeSupplier(cToken, src);
+            incentive.distributeSupplier(cToken, dst);
+        }
 
         return uint256(Error.NO_ERROR);
     }
@@ -1106,6 +1132,33 @@ contract Comptroller is
 
         // Emit NewPriceOracle(oldOracle, newOracle)
         emit NewPriceOracle(oldOracle, newOracle);
+
+        return uint256(Error.NO_ERROR);
+    }
+
+    /**
+     * @notice Sets a new incentive for the comptroller
+     * @dev Admin function to set a new incentive
+     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
+     */
+    function _setIncentive(IncentiveInterface newIncentive)
+        public
+        returns (uint256)
+    {
+        // Check caller is admin
+        if (msg.sender != admin) {
+            return
+                fail(Error.UNAUTHORIZED, FailureInfo.SET_INCENTIVE_OWNER_CHECK);
+        }
+
+        // Track the old incentive for the comptroller
+        IncentiveInterface oldIncentive = incentive;
+
+        // Set comptroller's incentive to newIncentive
+        incentive = newIncentive;
+
+        // Emit NewIncentive(oldIncentive, newIncentive)
+        emit NewIncentive(oldIncentive, newIncentive);
 
         return uint256(Error.NO_ERROR);
     }
