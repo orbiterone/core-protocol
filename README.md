@@ -1,9 +1,9 @@
 [![CircleCI](https://circleci.com/gh/compound-finance/compound-protocol.svg?style=svg&circle-token=5ed19932325c559a06f71f87d69012aedd2cf3fb)](https://circleci.com/gh/compound-finance/compound-protocol) [![codecov](https://codecov.io/gh/compound-finance/compound-protocol/branch/master/graph/badge.svg?token=q4UvsvVzOX)](https://codecov.io/gh/compound-finance/compound-protocol)
 
-Compound Protocol
+Orbiter One Protocol
 =================
 
-The Compound Protocol is an Ethereum smart contract for supplying or borrowing assets. Through the cToken contracts, accounts on the blockchain *supply* capital (Ether or ERC-20 tokens) to receive cTokens or *borrow* assets from the protocol (holding other assets as collateral). The Compound cToken contracts track these balances and algorithmically set interest rates for borrowers.
+The Orbiter One Protocol is an Polkdadot/Kusama smart contract for supplying or borrowing assets base of Compound Protocol. Through the oToken contracts, accounts on the blockchain *supply* capital (Ether or ERC-20 tokens, XC-20 tokens) to receive oTokens or *borrow* assets from the protocol (holding other assets as collateral). The Compound oToken contracts track these balances and algorithmically set interest rates for borrowers.
 
 Before getting started with this repo, please read:
 
@@ -25,13 +25,13 @@ Contracts
 We detail a few of the core contracts in the Compound protocol.
 
 <dl>
-  <dt>CToken, CErc20 and CEther</dt>
-  <dd>The Compound cTokens, which are self-contained borrowing and lending contracts. CToken contains the core logic and CErc20 and CEther add public interfaces for Erc20 tokens and ether, respectively. Each CToken is assigned an interest rate and risk model (see InterestRateModel and Comptroller sections), and allows accounts to *mint* (supply capital), *redeem* (withdraw capital), *borrow* and *repay a borrow*. Each CToken is an ERC-20 compliant token where balances represent ownership of the market.</dd>
+  <dt>OToken, OErc20 and OEther</dt>
+  <dd>The Compound oTokens, which are self-contained borrowing and lending contracts. OToken contains the core logic and OErc20 and OEther add public interfaces for Erc20 tokens and ether, respectively. Each OToken is assigned an interest rate and risk model (see InterestRateModel and Comptroller sections), and allows accounts to *mint* (supply capital), *redeem* (withdraw capital), *borrow* and *repay a borrow*. Each CToken is an ERC-20 compliant token where balances represent ownership of the market.</dd>
 </dl>
 
 <dl>
   <dt>Comptroller</dt>
-  <dd>The risk model contract, which validates permissible user actions and disallows actions if they do not fit certain risk parameters. For instance, the Comptroller enforces that each borrowing user must maintain a sufficient collateral balance across all cTokens.</dd>
+  <dd>The risk model contract, which validates permissible user actions and disallows actions if they do not fit certain risk parameters. For instance, the Comptroller enforces that each borrowing user must maintain a sufficient collateral balance across all oTokens.</dd>
   <ul>
   <em>Updating the Comptroller</em>
   <li>Follow the existing naming schema (ControllerGX)</li>
@@ -53,7 +53,7 @@ We detail a few of the core contracts in the Compound protocol.
 
 <dl>
   <dt>Governor Alpha</dt>
-  <dd>The administrator of the Compound timelock contract. Holders of Comp token may create and vote on proposals which will be queued into the Compound timelock and then have effects on Compound cToken and Comptroller contracts. This contract may be replaced in the future with a beta version.</dd>
+  <dd>The administrator of the Compound timelock contract. Holders of Comp token may create and vote on proposals which will be queued into the Compound timelock and then have effects on Compound oToken and Comptroller contracts. This contract may be replaced in the future with a beta version.</dd>
 </dl>
 
 <dl>
@@ -199,7 +199,7 @@ Note: you will need to set `~/.ethereum/<network>` with your private key or assi
 
 Note: for all sections including Etherscan verification, you must set the `ETHERSCAN_API_KEY` to a valid API Key from [Etherscan](https://etherscan.io/apis).
 
-To deploy a new cToken, you can run the `token:deploy`. command, as follows. If you set `VERIFY=true`, the script will verify the token on Etherscan as well. The JSON here is the token config JSON, which should be specific to the token you wish to list.
+To deploy a new oToken, you can run the `token:deploy`. command, as follows. If you set `VERIFY=true`, the script will verify the token on Etherscan as well. The JSON here is the token config JSON, which should be specific to the token you wish to list.
 
 ```bash
 npx saddle -n rinkeby script token:deploy '{
