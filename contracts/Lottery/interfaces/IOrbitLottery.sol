@@ -32,7 +32,7 @@ interface IOrbitLottery {
     function closeLottery(uint256 _lotteryId) external;
 
     /**
-     * @notice Draw the final number, calculate reward in CAKE per group, and make lottery claimable
+     * @notice Draw the final number, calculate reward in ORB per group, and make lottery claimable
      * @param _lotteryId: lottery id
      * @param _autoInjection: reinjects funds into next lottery (vs. withdrawing all)
      * @dev Callable by operator
@@ -45,7 +45,7 @@ interface IOrbitLottery {
     /**
      * @notice Inject funds
      * @param _lotteryId: lottery id
-     * @param _amount: amount to inject in CAKE token
+     * @param _amount: amount to inject in ORB token
      * @dev Callable by operator
      */
     function injectFunds(uint256 _lotteryId, uint256 _amount) external;
@@ -54,14 +54,14 @@ interface IOrbitLottery {
      * @notice Start the lottery
      * @dev Callable by operator
      * @param _endTime: endTime of the lottery
-     * @param _priceTicketInCake: price of a ticket in CAKE
+     * @param _priceTicketInOrb: price of a ticket in ORB
      * @param _discountDivisor: the divisor to calculate the discount magnitude for bulks
      * @param _rewardsBreakdown: breakdown of rewards per bracket (must sum to 10,000)
      * @param _treasuryFee: treasury fee (10,000 = 100%, 100 = 1%)
      */
     function startLottery(
         uint256 _endTime,
-        uint256 _priceTicketInCake,
+        uint256 _priceTicketInOrb,
         uint256 _discountDivisor,
         uint256[6] calldata _rewardsBreakdown,
         uint256 _treasuryFee
@@ -77,7 +77,7 @@ interface IRandomNumberGenerator {
     /**
      * Requests randomness from a user-provided seed
      */
-    function getRandomNumber(uint256 _seed) external;
+    function getRandomNumber(bytes32 _seed) external;
 
     /**
      * View latest lotteryId numbers

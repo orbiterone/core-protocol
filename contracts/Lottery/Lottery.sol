@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MIT
+pragma solidity 0.8.10;
+pragma abicoder v2;
+
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -6,17 +9,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./interfaces/IOrbitLottery.sol";
 
-pragma solidity ^0.8.10;
-pragma abicoder v2;
-
-/** @title PancakeSwap Lottery.
+/** @title Orbiter Lottery.
  * @notice It is a contract for a lottery system using
  * randomness provided externally.
  */
 contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
     using SafeERC20 for IERC20;
 
-    address public injectorAddress;
     address public operatorAddress;
     address public treasuryAddress;
 
@@ -25,17 +24,14 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
 
     uint256 public maxNumberTicketsPerBuyOrClaim = 100;
 
-    uint256 public maxPriceTicketInCake = 50 ether;
-    uint256 public minPriceTicketInCake = 0.005 ether;
-
     uint256 public pendingInjectionNextLottery;
 
-    uint256 public constant MIN_DISCOUNT_DIVISOR = 300;
-    uint256 public constant MIN_LENGTH_LOTTERY = 4 hours - 5 minutes; // 4 hours
+    uint256 public constant MIN_DISCOUNT_DIVISOR = 100;
+    uint256 public constant MIN_LENGTH_LOTTERY = 10 minutes; // 10 minutes
     uint256 public constant MAX_LENGTH_LOTTERY = 4 days + 5 minutes; // 4 days
     uint256 public constant MAX_TREASURY_FEE = 3000; // 30%
 
-    IERC20 public cakeToken;
+    IERC20 public orbToken;
     IRandomNumberGenerator public randomGenerator;
 
     enum Status {
@@ -49,15 +45,15 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
         Status status;
         uint256 startTime;
         uint256 endTime;
-        uint256 priceTicketInCake;
+        uint256 priceTicketInOrb;
         uint256 discountDivisor;
         uint256[6] rewardsBreakdown; // 0: 1 matching number // 5: 6 matching numbers
         uint256 treasuryFee; // 500: 5% // 200: 2% // 50: 0.5%
-        uint256[6] cakePerBracket;
+        uint256[6] orbPerBracket;
         uint256[6] countWinnersPerBracket;
         uint256 firstTicketId;
         uint256 firstTicketIdNextLottery;
-        uint256 amountCollectedInCake;
+        uint256 amountCollectedInOrb;
         uint32 finalNumber;
     }
 
@@ -92,14 +88,6 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
         _;
     }
 
-    modifier onlyOwnerOrInjector() {
-        require(
-            (msg.sender == owner()) || (msg.sender == injectorAddress),
-            "Not owner or injector"
-        );
-        _;
-    }
-
     event AdminTokenRecovery(address token, uint256 amount);
     event LotteryClose(
         uint256 indexed lotteryId,
@@ -110,7 +98,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
         uint256 indexed lotteryId,
         uint256 startTime,
         uint256 endTime,
-        uint256 priceTicketInCake,
+        uint256 priceTicketInOrb,
         uint256 firstTicketId,
         uint256 injectedAmount
     );
@@ -119,11 +107,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
         uint256 finalNumber,
         uint256 countWinningTickets
     );
-    event NewOperatorAndTreasuryAndInjectorAddresses(
-        address operator,
-        address treasury,
-        address injector
-    );
+    event NewOperatorAndTreasuryAddresses(address operator, address treasury);
     event NewRandomGenerator(address indexed randomGenerator);
     event TicketsPurchase(
         address indexed buyer,
@@ -140,11 +124,11 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
     /**
      * @notice Constructor
      * @dev RandomNumberGenerator must be deployed prior to this contract
-     * @param _cakeTokenAddress: address of the CAKE token
+     * @param _orbTokenAddress: address of the ORB token
      * @param _randomGeneratorAddress: address of the RandomGenerator contract used to work with ChainLink VRF
      */
-    constructor(address _cakeTokenAddress, address _randomGeneratorAddress) {
-        cakeToken = IERC20(_cakeTokenAddress);
+    constructor(address _orbTokenAddress, address _randomGeneratorAddress) {
+        orbToken = IERC20(_orbTokenAddress);
         randomGenerator = IRandomNumberGenerator(_randomGeneratorAddress);
 
         // Initializes a mapping
@@ -183,22 +167,22 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
             "Lottery is over"
         );
 
-        // Calculate number of CAKE to this contract
-        uint256 amountCakeToTransfer = _calculateTotalPriceForBulkTickets(
+        // Calculate number of ORB to this contract
+        uint256 amountOrbToTransfer = _calculateTotalPriceForBulkTickets(
             _lotteries[_lotteryId].discountDivisor,
-            _lotteries[_lotteryId].priceTicketInCake,
+            _lotteries[_lotteryId].priceTicketInOrb,
             _ticketNumbers.length
         );
 
-        // Transfer cake tokens to this contract
-        cakeToken.safeTransferFrom(
+        // Transfer orb tokens to this contract
+        orbToken.safeTransferFrom(
             address(msg.sender),
             address(this),
-            amountCakeToTransfer
+            amountOrbToTransfer
         );
 
         // Increment the total amount collected for the lottery round
-        _lotteries[_lotteryId].amountCollectedInCake += amountCakeToTransfer;
+        _lotteries[_lotteryId].amountCollectedInOrb += amountOrbToTransfer;
 
         for (uint256 i = 0; i < _ticketNumbers.length; i++) {
             uint32 thisTicketNumber = _ticketNumbers[i];
@@ -266,8 +250,8 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
             "Lottery not claimable"
         );
 
-        // Initializes the rewardInCakeToTransfer
-        uint256 rewardInCakeToTransfer;
+        // Initializes the rewardInOrbToTransfer
+        uint256 rewardInOrbToTransfer;
 
         for (uint256 i = 0; i < _ticketIds.length; i++) {
             require(_brackets[i] < 6, "Bracket out of range"); // Must be between 0 and 5
@@ -311,15 +295,15 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
             }
 
             // Increment the reward to transfer
-            rewardInCakeToTransfer += rewardForTicketId;
+            rewardInOrbToTransfer += rewardForTicketId;
         }
 
         // Transfer money to msg.sender
-        cakeToken.safeTransfer(msg.sender, rewardInCakeToTransfer);
+        orbToken.safeTransfer(msg.sender, rewardInOrbToTransfer);
 
         emit TicketsClaim(
             msg.sender,
-            rewardInCakeToTransfer,
+            rewardInOrbToTransfer,
             _lotteryId,
             _ticketIds.length
         );
@@ -348,7 +332,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
 
         // Request a random number from the generator based on a seed
         randomGenerator.getRandomNumber(
-            uint256(keccak256(abi.encodePacked(_lotteryId, currentTicketId)))
+            keccak256(abi.encodePacked(_lotteryId, currentTicketId))
         );
 
         _lotteries[_lotteryId].status = Status.Close;
@@ -357,7 +341,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
     }
 
     /**
-     * @notice Draw the final number, calculate reward in CAKE per group, and make lottery claimable
+     * @notice Draw the final number, calculate reward in ORB per group, and make lottery claimable
      * @param _lotteryId: lottery id
      * @param _autoInjection: reinjects funds into next lottery (vs. withdrawing all)
      * @dev Callable by operator
@@ -375,7 +359,6 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
             "Numbers not drawn"
         );
 
-        // Calculate the finalNumber based on the randomResult generated by ChainLink's fallback
         uint32 finalNumber = randomGenerator.viewRandomResult();
 
         // Initialize a number to count addresses in the previous bracket
@@ -383,14 +366,14 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
 
         // Calculate the amount to share post-treasury fee
         uint256 amountToShareToWinners = (
-            ((_lotteries[_lotteryId].amountCollectedInCake) *
+            ((_lotteries[_lotteryId].amountCollectedInOrb) *
                 (10000 - _lotteries[_lotteryId].treasuryFee))
         ) / 10000;
 
         // Initializes the amount to withdraw to treasury
         uint256 amountToWithdrawToTreasury;
 
-        // Calculate prizes in CAKE for each bracket by starting from the highest one
+        // Calculate prizes in ORB for each bracket by starting from the highest one
         for (uint32 i = 0; i < 6; i++) {
             uint32 j = 5 - i;
             uint32 transformedWinningNumber = _bracketCalculator[j] +
@@ -410,7 +393,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
             ) {
                 // B. If rewards at this bracket are > 0, calculate, else, report the numberAddresses from previous bracket
                 if (_lotteries[_lotteryId].rewardsBreakdown[j] != 0) {
-                    _lotteries[_lotteryId].cakePerBracket[j] =
+                    _lotteries[_lotteryId].orbPerBracket[j] =
                         ((_lotteries[_lotteryId].rewardsBreakdown[j] *
                             amountToShareToWinners) /
                             (_numberTicketsPerLotteryId[_lotteryId][
@@ -423,9 +406,9 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
                         _lotteryId
                     ][transformedWinningNumber];
                 }
-                // A. No CAKE to distribute, they are added to the amount to withdraw to treasury address
+                // A. No ORB to distribute, they are added to the amount to withdraw to treasury address
             } else {
-                _lotteries[_lotteryId].cakePerBracket[j] = 0;
+                _lotteries[_lotteryId].orbPerBracket[j] = 0;
 
                 amountToWithdrawToTreasury +=
                     (_lotteries[_lotteryId].rewardsBreakdown[j] *
@@ -444,10 +427,10 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
         }
 
         amountToWithdrawToTreasury += (_lotteries[_lotteryId]
-            .amountCollectedInCake - amountToShareToWinners);
+            .amountCollectedInOrb - amountToShareToWinners);
 
-        // Transfer CAKE to treasury address
-        cakeToken.safeTransfer(treasuryAddress, amountToWithdrawToTreasury);
+        // Transfer ORB to treasury address
+        orbToken.safeTransfer(treasuryAddress, amountToWithdrawToTreasury);
 
         emit LotteryNumberDrawn(
             currentLotteryId,
@@ -474,9 +457,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
 
         // Request a random number from the generator based on a seed
         IRandomNumberGenerator(_randomGeneratorAddress).getRandomNumber(
-            uint256(
-                keccak256(abi.encodePacked(currentLotteryId, currentTicketId))
-            )
+            keccak256(abi.encodePacked(currentLotteryId, currentTicketId))
         );
 
         // Calculate the finalNumber based on the randomResult generated by ChainLink's fallback
@@ -490,21 +471,21 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
     /**
      * @notice Inject funds
      * @param _lotteryId: lottery id
-     * @param _amount: amount to inject in CAKE token
+     * @param _amount: amount to inject in ORB token
      * @dev Callable by owner or injector address
      */
     function injectFunds(uint256 _lotteryId, uint256 _amount)
         external
         override
-        onlyOwnerOrInjector
+        onlyOwner
     {
         require(
             _lotteries[_lotteryId].status == Status.Open,
             "Lottery not open"
         );
 
-        cakeToken.safeTransferFrom(address(msg.sender), address(this), _amount);
-        _lotteries[_lotteryId].amountCollectedInCake += _amount;
+        orbToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+        _lotteries[_lotteryId].amountCollectedInOrb += _amount;
 
         emit LotteryInjection(_lotteryId, _amount);
     }
@@ -513,14 +494,14 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * @notice Start the lottery
      * @dev Callable by operator
      * @param _endTime: endTime of the lottery
-     * @param _priceTicketInCake: price of a ticket in CAKE
+     * @param _priceTicketInOrb: price of a ticket in ORB
      * @param _discountDivisor: the divisor to calculate the discount magnitude for bulks
      * @param _rewardsBreakdown: breakdown of rewards per bracket (must sum to 10,000)
      * @param _treasuryFee: treasury fee (10,000 = 100%, 100 = 1%)
      */
     function startLottery(
         uint256 _endTime,
-        uint256 _priceTicketInCake,
+        uint256 _priceTicketInOrb,
         uint256 _discountDivisor,
         uint256[6] calldata _rewardsBreakdown,
         uint256 _treasuryFee
@@ -535,12 +516,6 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
             ((_endTime - block.timestamp) > MIN_LENGTH_LOTTERY) &&
                 ((_endTime - block.timestamp) < MAX_LENGTH_LOTTERY),
             "Lottery length outside of range"
-        );
-
-        require(
-            (_priceTicketInCake >= minPriceTicketInCake) &&
-                (_priceTicketInCake <= maxPriceTicketInCake),
-            "Outside of limits"
         );
 
         require(
@@ -565,11 +540,11 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
             status: Status.Open,
             startTime: block.timestamp,
             endTime: _endTime,
-            priceTicketInCake: _priceTicketInCake,
+            priceTicketInOrb: _priceTicketInOrb,
             discountDivisor: _discountDivisor,
             rewardsBreakdown: _rewardsBreakdown,
             treasuryFee: _treasuryFee,
-            cakePerBracket: [
+            orbPerBracket: [
                 uint256(0),
                 uint256(0),
                 uint256(0),
@@ -587,7 +562,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
             ],
             firstTicketId: currentTicketId,
             firstTicketIdNextLottery: currentTicketId,
-            amountCollectedInCake: pendingInjectionNextLottery,
+            amountCollectedInOrb: pendingInjectionNextLottery,
             finalNumber: 0
         });
 
@@ -595,7 +570,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
             currentLotteryId,
             block.timestamp,
             _endTime,
-            _priceTicketInCake,
+            _priceTicketInOrb,
             currentTicketId,
             pendingInjectionNextLottery
         );
@@ -613,30 +588,11 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
         external
         onlyOwner
     {
-        require(_tokenAddress != address(cakeToken), "Cannot be CAKE token");
+        require(_tokenAddress != address(orbToken), "Cannot be ORB token");
 
         IERC20(_tokenAddress).safeTransfer(address(msg.sender), _tokenAmount);
 
         emit AdminTokenRecovery(_tokenAddress, _tokenAmount);
-    }
-
-    /**
-     * @notice Set CAKE price ticket upper/lower limit
-     * @dev Only callable by owner
-     * @param _minPriceTicketInCake: minimum price of a ticket in CAKE
-     * @param _maxPriceTicketInCake: maximum price of a ticket in CAKE
-     */
-    function setMinAndMaxTicketPriceInCake(
-        uint256 _minPriceTicketInCake,
-        uint256 _maxPriceTicketInCake
-    ) external onlyOwner {
-        require(
-            _minPriceTicketInCake <= _maxPriceTicketInCake,
-            "minPrice must be < maxPrice"
-        );
-
-        minPriceTicketInCake = _minPriceTicketInCake;
-        maxPriceTicketInCake = _maxPriceTicketInCake;
     }
 
     /**
@@ -656,32 +612,27 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * @dev Only callable by owner
      * @param _operatorAddress: address of the operator
      * @param _treasuryAddress: address of the treasury
-     * @param _injectorAddress: address of the injector
      */
-    function setOperatorAndTreasuryAndInjectorAddresses(
+    function setOperatorAndTreasuryAddresses(
         address _operatorAddress,
-        address _treasuryAddress,
-        address _injectorAddress
+        address _treasuryAddress
     ) external onlyOwner {
         require(_operatorAddress != address(0), "Cannot be zero address");
         require(_treasuryAddress != address(0), "Cannot be zero address");
-        require(_injectorAddress != address(0), "Cannot be zero address");
 
         operatorAddress = _operatorAddress;
         treasuryAddress = _treasuryAddress;
-        injectorAddress = _injectorAddress;
 
-        emit NewOperatorAndTreasuryAndInjectorAddresses(
+        emit NewOperatorAndTreasuryAddresses(
             _operatorAddress,
-            _treasuryAddress,
-            _injectorAddress
+            _treasuryAddress
         );
     }
 
     /**
      * @notice Calculate price of a set of tickets
      * @param _discountDivisor: divisor for the discount
-     * @param _priceTicket price of a ticket (in CAKE)
+     * @param _priceTicket price of a ticket (in ORB)
      * @param _numberTickets number of tickets to buy
      */
     function calculateTotalPriceForBulkTickets(
@@ -859,7 +810,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
 
         // Confirm that the two transformed numbers are the same, if not throw
         if (transformedWinningNumber == transformedUserNumber) {
-            return _lotteries[_lotteryId].cakePerBracket[_bracket];
+            return _lotteries[_lotteryId].orbPerBracket[_bracket];
         } else {
             return 0;
         }
