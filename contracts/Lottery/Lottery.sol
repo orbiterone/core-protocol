@@ -146,12 +146,10 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * @param _ticketNumbers: array of ticket numbers between 1,000,000 and 1,999,999
      * @dev Callable by users
      */
-    function buyTickets(uint256 _lotteryId, uint32[] calldata _ticketNumbers)
-        external
-        override
-        notContract
-        nonReentrant
-    {
+    function buyTickets(
+        uint256 _lotteryId,
+        uint32[] calldata _ticketNumbers
+    ) external override notContract nonReentrant {
         require(_ticketNumbers.length != 0, "No ticket specified");
         require(
             _ticketNumbers.length <= maxNumberTicketsPerBuyOrClaim,
@@ -314,12 +312,9 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * @param _lotteryId: lottery id
      * @dev Callable by operator
      */
-    function closeLottery(uint256 _lotteryId)
-        external
-        override
-        onlyOperator
-        nonReentrant
-    {
+    function closeLottery(
+        uint256 _lotteryId
+    ) external override onlyOperator nonReentrant {
         require(
             _lotteries[_lotteryId].status == Status.Open,
             "Lottery not open"
@@ -377,7 +372,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
         for (uint32 i = 0; i < 6; i++) {
             uint32 j = 5 - i;
             uint32 transformedWinningNumber = _bracketCalculator[j] +
-                (finalNumber % (uint32(10)**(j + 1)));
+                (finalNumber % (uint32(10) ** (j + 1)));
 
             _lotteries[_lotteryId].countWinnersPerBracket[j] =
                 _numberTicketsPerLotteryId[_lotteryId][
@@ -446,10 +441,9 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * Callable only by the contract owner
      * @param _randomGeneratorAddress: address of the random generator
      */
-    function changeRandomGenerator(address _randomGeneratorAddress)
-        external
-        onlyOwner
-    {
+    function changeRandomGenerator(
+        address _randomGeneratorAddress
+    ) external onlyOwner {
         require(
             _lotteries[currentLotteryId].status == Status.Claimable,
             "Lottery not in claimable"
@@ -474,11 +468,10 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * @param _amount: amount to inject in ORB token
      * @dev Callable by owner or injector address
      */
-    function injectFunds(uint256 _lotteryId, uint256 _amount)
-        external
-        override
-        onlyOwner
-    {
+    function injectFunds(
+        uint256 _lotteryId,
+        uint256 _amount
+    ) external override onlyOwner {
         require(
             _lotteries[_lotteryId].status == Status.Open,
             "Lottery not open"
@@ -584,10 +577,10 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * @param _tokenAmount: the number of token amount to withdraw
      * @dev Only callable by owner.
      */
-    function recoverWrongTokens(address _tokenAddress, uint256 _tokenAmount)
-        external
-        onlyOwner
-    {
+    function recoverWrongTokens(
+        address _tokenAddress,
+        uint256 _tokenAmount
+    ) external onlyOwner {
         require(_tokenAddress != address(orbToken), "Cannot be ORB token");
 
         IERC20(_tokenAddress).safeTransfer(address(msg.sender), _tokenAmount);
@@ -599,10 +592,9 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * @notice Set max number of tickets
      * @dev Only callable by owner
      */
-    function setMaxNumberTicketsPerBuy(uint256 _maxNumberTicketsPerBuy)
-        external
-        onlyOwner
-    {
+    function setMaxNumberTicketsPerBuy(
+        uint256 _maxNumberTicketsPerBuy
+    ) external onlyOwner {
         require(_maxNumberTicketsPerBuy != 0, "Must be > 0");
         maxNumberTicketsPerBuyOrClaim = _maxNumberTicketsPerBuy;
     }
@@ -665,11 +657,9 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * @notice View lottery information
      * @param _lotteryId: lottery id
      */
-    function viewLottery(uint256 _lotteryId)
-        external
-        view
-        returns (Lottery memory)
-    {
+    function viewLottery(
+        uint256 _lotteryId
+    ) external view returns (Lottery memory) {
         return _lotteries[_lotteryId];
     }
 
@@ -677,11 +667,9 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
      * @notice View ticker statuses and numbers for an array of ticket ids
      * @param _ticketIds: array of _ticketId
      */
-    function viewNumbersAndStatusesForTicketIds(uint256[] calldata _ticketIds)
-        external
-        view
-        returns (uint32[] memory, bool[] memory)
-    {
+    function viewNumbersAndStatusesForTicketIds(
+        uint256[] calldata _ticketIds
+    ) external view returns (uint32[] memory, bool[] memory) {
         uint256 length = _ticketIds.length;
         uint32[] memory ticketNumbers = new uint32[](length);
         bool[] memory ticketStatuses = new bool[](length);
@@ -741,12 +729,7 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
     )
         external
         view
-        returns (
-            uint256[] memory,
-            uint32[] memory,
-            bool[] memory,
-            uint256
-        )
+        returns (uint256[] memory, uint32[] memory, bool[] memory, uint256)
     {
         uint256 length = _size;
         uint256 numberTicketsBoughtAtLotteryId = _userTicketIdsPerLotteryId[
@@ -803,10 +786,10 @@ contract OrbitLottery is ReentrancyGuard, IOrbitLottery, Ownable {
 
         // Apply transformation to verify the claim provided by the user is true
         uint32 transformedWinningNumber = _bracketCalculator[_bracket] +
-            (winningTicketNumber % (uint32(10)**(_bracket + 1)));
+            (winningTicketNumber % (uint32(10) ** (_bracket + 1)));
 
         uint32 transformedUserNumber = _bracketCalculator[_bracket] +
-            (userNumber % (uint32(10)**(_bracket + 1)));
+            (userNumber % (uint32(10) ** (_bracket + 1)));
 
         // Confirm that the two transformed numbers are the same, if not throw
         if (transformedWinningNumber == transformedUserNumber) {

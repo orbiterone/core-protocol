@@ -28,6 +28,7 @@
 #Gate (Erc20 MAI Address) (Erc20 Deploy Existing MAI "0xCb10810e1B83f81858994Ced3dE2EeC8328F161A" "Mai Stablecoin")
 #Gate (Erc20 xcKBTC Address) (Erc20 Deploy Existing xcKBTC "0x4aDe7E5637618a9Ca55503026c4bAE5820Bf81d6" "Kintsugi Wrapped BTC")
 #Gate (Erc20 wstKSM Address) (Erc20 Deploy Existing wstKSM "0x1a6B75Bc537bAA6B29e9b543891abE9c96F6beD3" "wstKSM")
+Gate (Erc20 d2O Address) (Erc20 Deploy Existing d2O "0x607F26BC84035088e3AD308e6d9439Da507190dB" "Deuterium")
 
 
 -- Now deploy our cTokens
@@ -49,6 +50,8 @@
 #Gate(CToken oMAI Address) (CToken Deploy CErc20Delegator oMAI "Orbiter MAI" (Erc20 MAI Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
 #Gate(CToken oxcAUSD Address) (CToken Deploy CErc20Delegator oxcAUSD "Orbiter xcAUSD" (Erc20 xcAUSD Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e3 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
 #Gate(CToken owstKSM Address) (CToken Deploy CErc20Delegator owstKSM "Orbiter wstKSM" (Erc20 wstKSM Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e3 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+Gate(CToken od2O Address) (CToken Deploy CErc20Delegator od2O "Orbiter d2O" (Erc20 d2O Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xb56D7e349e407028d7f85ed6Fa0dD481BaB76D16 (CTokenDelegate CErc20Delegate Address) "0x")
+
 
 -- Deploy Maximillion
 #Gate (Maximillion Address) (Maximillion Deploy oMOVR)
