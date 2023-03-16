@@ -95,8 +95,7 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
     }
 
     function marketInfoByAccount(address _account)
-        public
-        view
+        external
         returns (
             MarketUserInfo memory,
             MarketSupplyInfo[] memory,
@@ -117,7 +116,8 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
         );
 
         for (uint256 i = 0; i < supportMarkets.length; i++) {
-            CToken asset = supportMarkets[i];
+            CTokenInterface asset = supportMarkets[i];
+            asset.accrueInterest();
             // Read the balances and exchange rate from the cToken
             (
                 ,
@@ -134,10 +134,15 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
             vars.exchangeRate = Exp({mantissa: vars.exchangeRateMantissa});
 
             // Get the normalized price of the asset
-            vars.oraclePriceMantissa = oracle.getUnderlyingPrice(asset);
+            vars.oraclePriceMantissa = oracle.getUnderlyingPrice(
+                CToken(address(asset))
+            );
             vars.oraclePrice = Exp({mantissa: vars.oraclePriceMantissa});
 
-            bool checkAsset = comptroller.checkMembership(_account, asset);
+            bool checkAsset = comptroller.checkMembership(
+                _account,
+                CToken(address(asset))
+            );
             supplied[i] = MarketSupplyInfo({
                 totalSupply: mul_(vars.cTokenBalance, vars.exchangeRate),
                 oToken: address(asset),

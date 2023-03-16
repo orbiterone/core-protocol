@@ -884,6 +884,7 @@ contract ORBToken is ERC20, Ownable {
     using SafeMath for uint256;
 
     mapping(address => bool) public isExcludedFromFee;
+    mapping(address => bool) public whiteListedPair;
     mapping(address => bool) public isMinter;
     mapping(address => bool) public isBurner;
 
@@ -894,6 +895,11 @@ contract ORBToken is ERC20, Ownable {
     event FeeUpdated(address indexed _user, uint256 _fee);
     event FeeWalletUpdated(address indexed _user, address _feeWallet);
     event TaxStatusUpdated(address indexed _user, bool _status);
+    event ToggleV2Pair(
+        address indexed _user,
+        address indexed _pair,
+        bool _flag
+    );
 
     uint256 public SELL_FEE = 2000;
 
@@ -948,11 +954,18 @@ contract ORBToken is ERC20, Ownable {
         require(recipient != address(0), "ERC20: transfer to the zero address");
 
         if (TAX_ACTIVE) {
-            uint256 taxFee = SELL_FEE;
+            uint256 taxFee;
+            if (whiteListedPair[recipient]) {
+                taxFee = SELL_FEE;
+            }
 
-            if (isExcludedFromFee[sender] || isExcludedFromFee[recipient]) {
+            if (
+                (isExcludedFromFee[sender] || isExcludedFromFee[recipient]) ||
+                (!whiteListedPair[sender] && !whiteListedPair[recipient])
+            ) {
                 taxFee = 0;
             }
+
             uint256 taxFeeAmount = amount.mul(taxFee).div(10000);
 
             if (taxFeeAmount > 0) {
@@ -963,6 +976,12 @@ contract ORBToken is ERC20, Ownable {
         }
 
         super._transfer(sender, recipient, amount);
+    }
+
+    function enableV2PairFee(address _account, bool _flag) external onlyOwner {
+        whiteListedPair[_account] = _flag;
+
+        emit ToggleV2Pair(_msgSender(), _account, _flag);
     }
 
     function mint(address _user, uint256 _amount) external hasMinterRole {
