@@ -66,6 +66,7 @@ contract Incentive is Ownable, ExponentialNoError {
     uint224 public constant rewardInitialIndex = 1e36;
 
     address[] public supportIncentive;
+    mapping(address => bool) public isExcludedReward;
 
     mapping(address => mapping(address => uint)) public supplyRewardSpeeds;
 
@@ -120,6 +121,15 @@ contract Incentive is Ownable, ExponentialNoError {
         _;
     }
 
+    modifier isExcludeAccountReward(address _account) {
+        require(
+            !isExcludedReward[_account],
+            "Incentive::distribute: account excludes reward"
+        );
+
+        _;
+    }
+
     constructor(address _comptroller) isComptroller(_comptroller) {
         comptroller = IComp(_comptroller);
     }
@@ -136,6 +146,13 @@ contract Incentive is Ownable, ExponentialNoError {
         address _comptroller
     ) external onlyOwner isComptroller(_comptroller) {
         comptroller = IComp(_comptroller);
+    }
+
+    function excludeAccountReward(
+        address _account,
+        bool _flag
+    ) external onlyOwner {
+        isExcludedReward[_account] = _flag;
     }
 
     function supportIncentiveAsset(
@@ -356,7 +373,9 @@ contract Incentive is Ownable, ExponentialNoError {
     function distributeSupplier(address cToken, address supplier) external {
         for (uint256 i = 0; i < supportIncentive.length; i++) {
             updateRewardSupplyIndex(supportIncentive[i], cToken);
-            distributeSupplierReward(supportIncentive[i], cToken, supplier);
+            if (isExcludedReward[supplier] == false) {
+                distributeSupplierReward(supportIncentive[i], cToken, supplier);
+            }
         }
     }
 
@@ -364,19 +383,21 @@ contract Incentive is Ownable, ExponentialNoError {
         Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
         for (uint256 i = 0; i < supportIncentive.length; i++) {
             updateRewardBorrowIndex(supportIncentive[i], cToken, borrowIndex);
-            distributeBorrowerReward(
-                supportIncentive[i],
-                cToken,
-                borrower,
-                borrowIndex
-            );
+            if (isExcludedReward[borrower] == false) {
+                distributeBorrowerReward(
+                    supportIncentive[i],
+                    cToken,
+                    borrower,
+                    borrowIndex
+                );
+            }
         }
     }
 
     function claimIncentive(
         address incentive,
         address holder
-    ) public isSupportIncentive(incentive) {
+    ) public isSupportIncentive(incentive) isExcludeAccountReward(holder) {
         return claimIncentive(incentive, holder, comptroller.getAllMarkets());
     }
 
@@ -384,7 +405,7 @@ contract Incentive is Ownable, ExponentialNoError {
         address incentive,
         address holder,
         CToken[] memory cTokens
-    ) public isSupportIncentive(incentive) {
+    ) public isSupportIncentive(incentive) isExcludeAccountReward(holder) {
         address[] memory holders = new address[](1);
         holders[0] = holder;
         claimIncentive(incentive, holders, cTokens, true, true);
@@ -397,6 +418,12 @@ contract Incentive is Ownable, ExponentialNoError {
         bool borrowers,
         bool suppliers
     ) public isSupportIncentive(incentive) {
+        for (uint256 j = 0; j < holders.length; j++) {
+            require(
+                !isExcludedReward[holders[j]],
+                "Incentive::distributeSupplier: supplier excludes reward"
+            );
+        }
         for (uint256 i = 0; i < cTokens.length; i++) {
             CToken cToken = cTokens[i];
             (bool isListed, , ) = comptroller.markets(address(cToken));
