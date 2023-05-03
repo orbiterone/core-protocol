@@ -2,7 +2,7 @@
 -- Deploys new Comptroller with some ERC20 and some cTokens
 
 -- First deploy a price oracle
-#Gate (PriceOracle Address) (PriceOracle Deploy Simple)
+Gate (PriceOracle Address) (PriceOracle Deploy Simple)
 
 -- Next a comptroller
 Gate (Comptroller Address) (Comptroller Deploy Comptroller)
@@ -50,7 +50,6 @@ Gate(CToken oMAI Address) (CToken Deploy CErc20Delegator oMAI "Orbiter MAI" (Erc
 Gate(CToken oxcAUSD Address) (CToken Deploy CErc20Delegator oxcAUSD "Orbiter xcAUSD" (Erc20 xcAUSD Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e3 8 0xFFd4faaFA00b16393fE7b72F4De24a9b2bDB4Ff5 (CTokenDelegate CErc20Delegate Address) "0x")
 Gate(CToken owstKSM Address) (CToken Deploy CErc20Delegator owstKSM "Orbiter wstKSM" (Erc20 wstKSM Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e3 8 0xFFd4faaFA00b16393fE7b72F4De24a9b2bDB4Ff5 (CTokenDelegate CErc20Delegate Address) "0x")
 Gate(CToken od2O Address) (CToken Deploy CErc20Delegator od2O "Orbiter d2O" (Erc20 d2O Address) (Comptroller Address) (InterestRateModel MyInterestRateModel Address) 0.2e9 8 0xFFd4faaFA00b16393fE7b72F4De24a9b2bDB4Ff5 (CTokenDelegate CErc20Delegate Address) "0x")
-
 
 -- Deploy Maximillion
 #Gate (Maximillion Address) (Maximillion Deploy oMOVR)
