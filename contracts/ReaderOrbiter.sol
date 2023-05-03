@@ -3,9 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./PriceOracle.sol";
-import "./IncentiveInterface.sol";
 import "./CTokenInterfaces.sol";
-import "./EIP20Interface.sol";
 import "./ExponentialNoError.sol";
 
 abstract contract IComp {
@@ -26,32 +24,29 @@ abstract contract IComp {
 
     PriceOracle public oracle;
 
-    IncentiveInterface public incentive;
-
     mapping(address => Market) public markets;
 
     function getAllMarkets() public view virtual returns (CToken[] memory);
 
-    function getAccountLiquidity(
-        address account
-    ) public view virtual returns (uint256, uint256, uint256);
+    function getAccountLiquidity(address account)
+        public
+        view
+        virtual
+        returns (
+            uint256,
+            uint256,
+            uint256
+        );
 
-    function checkMembership(
-        address account,
-        CToken cToken
-    ) external view virtual returns (bool);
+    function checkMembership(address account, CToken cToken)
+        external
+        view
+        virtual
+        returns (bool);
 }
 
 contract ReaderOrbiter is Ownable, ExponentialNoError {
     IComp comptroller;
-
-    struct IncentiveInfo {
-        string tokenName;
-        string tokenSymbol;
-        uint8 tokenDecimal;
-        address token;
-        uint256 reward;
-    }
 
     struct MarketSupplyInfo {
         address oToken;
@@ -99,63 +94,7 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
         comptroller = IComp(_comptroller);
     }
 
-    function incentives(
-        address _account
-    ) external returns (IncentiveInfo[] memory) {
-        IncentiveInterface incentive = comptroller.incentive();
-        CToken[] memory supportMarkets = comptroller.getAllMarkets();
-
-        address[] memory supportIncentives = incentive
-            .getAllSupportIncentives();
-
-        IncentiveInfo[] memory incentivesData = new IncentiveInfo[](
-            supportIncentives.length
-        );
-
-        for (uint256 i = 0; i < supportIncentives.length; i++) {
-            EIP20Interface itemIncentive = EIP20Interface(supportIncentives[i]);
-            for (uint256 j = 0; j < supportMarkets.length; j++) {
-                CTokenInterface asset = supportMarkets[j];
-
-                if (
-                    incentive.supplyRewardSpeeds(
-                        address(itemIncentive),
-                        address(asset)
-                    ) > 0
-                ) {
-                    incentive.distributeSupplier(address(asset), _account);
-                }
-
-                if (
-                    incentive.borrowRewardSpeeds(
-                        address(itemIncentive),
-                        address(asset)
-                    ) > 0
-                ) {
-                    incentive.distributeBorrower(address(asset), _account);
-                }
-            }
-
-            uint256 reward = incentive.rewardAccrued(
-                address(itemIncentive),
-                _account
-            );
-
-            incentivesData[i] = IncentiveInfo({
-                tokenName: itemIncentive.name(),
-                tokenSymbol: itemIncentive.symbol(),
-                tokenDecimal: itemIncentive.decimals(),
-                token: address(itemIncentive),
-                reward: reward
-            });
-        }
-
-        return incentivesData;
-    }
-
-    function marketInfoByAccount(
-        address _account
-    )
+    function marketInfoByAccount(address _account)
         external
         returns (
             MarketUserInfo memory,
