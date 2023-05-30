@@ -257,6 +257,30 @@ module.exports = {
         {file: "./.ethereum/moonriver"}                         // Load from given file with contents as the private key (e.g. 0x...)
       ]
     },
+    moonbeam: {
+      providers: [
+        {env: "PROVIDER"},
+        {http: "https://rpc.api.moonbeam.network"}
+      ],
+      web3: {
+        gas: [
+          {env: "GAS"},
+          {default: "12990000"}
+        ],
+        gas_price: [
+          {env: "GAS_PRICE"},
+          {default: "200000000000"}
+        ],
+        options: {
+          transactionConfirmationBlocks: 1,
+          transactionBlockTimeout: 5
+        }
+      },
+      accounts: [
+        {env: "ACCOUNT"},
+        {file: "./.ethereum/moonbeam"}                         // Load from given file with contents as the private key (e.g. 0x...)
+      ]
+    },
   },
   get_network_file: (network) => {
     return null;
