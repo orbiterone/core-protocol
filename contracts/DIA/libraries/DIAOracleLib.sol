@@ -8,3 +8,7 @@ interface IDIAOracleV2 {
 interface WSTKsmAdapter {
     function wstKSMPrice() external view returns (uint256);
 }
+
+interface D2OAdapter {
+    function getPrice(string memory key) external view returns (uint256);
+}

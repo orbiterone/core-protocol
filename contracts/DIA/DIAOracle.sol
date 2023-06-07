@@ -14,14 +14,16 @@ contract DIAOracle is Ownable, PriceOracle {
     using SafeMath for uint256;
     IDIAOracleV2 ORACLE;
     WSTKsmAdapter KSM_ADAPTER;
+    D2OAdapter D2O_ADAPTER;
 
     event KeySet(address oToken, string key);
 
     mapping(address => string) internal _assets;
 
-    constructor(address _oracle, address _ksmAdapter) {
+    constructor(address _oracle, address _ksmAdapter, address _d2oAdapter) {
         ORACLE = IDIAOracleV2(_oracle);
         KSM_ADAPTER = WSTKsmAdapter(_ksmAdapter);
+        D2O_ADAPTER = D2OAdapter(_d2oAdapter);
     }
 
     function setOracle(address _oracle) external onlyOwner {
@@ -41,6 +43,16 @@ contract DIAOracle is Ownable, PriceOracle {
         KSM_ADAPTER = WSTKsmAdapter(_ksmAdapter);
     }
 
+    function setd2OAdapter(address _d2oAdapter) external onlyOwner {
+        uint256 price = D2OAdapter(_d2oAdapter).getPrice("USDC");
+        require(
+            price > 0,
+            "DIAOracle::setd2OAdapter: contract is not d20 adapter"
+        );
+
+        D2O_ADAPTER = D2OAdapter(_d2oAdapter);
+    }
+
     function setAsset(string calldata key, CToken cToken) external onlyOwner {
         require(
             address(cToken) != address(0) && compareStrings(key, "") == false,
@@ -58,7 +70,7 @@ contract DIAOracle is Ownable, PriceOracle {
         uint256 decimal = 18;
         uint256 priceLast = 0;
         if (
-            compareStrings(symbol, "oMOVR") == false ||
+            compareStrings(symbol, "oMOVR") == false &&
             compareStrings(symbol, "oGLMR") == false
         ) {
             EIP20Interface token = EIP20Interface(
@@ -69,6 +81,8 @@ contract DIAOracle is Ownable, PriceOracle {
 
         if (compareStrings(symbol, "owstKSM")) {
             priceLast = KSM_ADAPTER.wstKSMPrice();
+        } else if (compareStrings(symbol, "od2O")) {
+            priceLast = D2O_ADAPTER.getPrice("USDC");
         } else {
             (uint128 price, ) = ORACLE.getValue(key);
             priceLast = uint256(price);
