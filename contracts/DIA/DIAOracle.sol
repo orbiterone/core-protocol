@@ -62,9 +62,12 @@ contract DIAOracle is Ownable, PriceOracle {
         _assets[address(cToken)] = key;
     }
 
-    function getUnderlyingPrice(
-        CToken oToken
-    ) public view override returns (uint256) {
+    function getUnderlyingPrice(CToken oToken) 
+        public 
+        view 
+        override 
+        returns (uint256) 
+    {
         string memory key = _assets[address(oToken)];
         string memory symbol = oToken.symbol();
         uint256 decimal = 18;
@@ -88,15 +91,16 @@ contract DIAOracle is Ownable, PriceOracle {
             priceLast = uint256(price);
         }
 
-        priceLast = uint256(priceLast).mul(10 ** (36 - 8 - decimal));
+        priceLast = uint256(priceLast).mul(10**(36 - 8 - decimal));
 
         return priceLast;
     }
 
-    function compareStrings(
-        string memory a,
-        string memory b
-    ) internal pure returns (bool) {
+    function compareStrings(string memory a, string memory b) 
+        internal 
+        pure 
+        returns (bool)
+    {
         return (keccak256(abi.encodePacked((a))) ==
             keccak256(abi.encodePacked((b))));
     }
