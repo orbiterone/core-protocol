@@ -2,12 +2,12 @@
 pragma solidity 0.8.10;
 
 abstract contract IncentiveInterface {
-    function distributeSupplier(address cToken, address supplier) 
-        external 
+    function distributeSupplier(address cToken, address supplier)
+        external
         virtual;
 
-    function distributeBorrower(address cToken, address borrower) 
-        external 
+    function distributeBorrower(address cToken, address borrower)
+        external
         virtual;
 
     mapping(address => mapping(address => uint)) public rewardAccrued;

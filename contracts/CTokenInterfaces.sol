@@ -246,9 +246,9 @@ abstract contract CTokenInterface is CTokenStorage {
 
     /*** User Interface ***/
 
-    function transfer(address dst, uint256 amount) 
-        external 
-        virtual 
+    function transfer(address dst, uint256 amount)
+        external
+        virtual
         returns (bool);
 
     function transferFrom(
@@ -257,32 +257,32 @@ abstract contract CTokenInterface is CTokenStorage {
         uint256 amount
     ) external virtual returns (bool);
 
-    function approve(address spender, uint256 amount) 
-        external 
-        virtual 
+    function approve(address spender, uint256 amount)
+        external
+        virtual
         returns (bool);
 
-    function allowance(address owner, address spender) 
-        external 
-        view 
-        virtual 
+    function allowance(address owner, address spender)
+        external
+        view
+        virtual
         returns (uint256);
 
     function balanceOf(address owner) external view virtual returns (uint256);
 
-    function balanceOfUnderlying(address owner) 
-        external 
-        virtual 
+    function balanceOfUnderlying(address owner)
+        external
+        virtual
         returns (uint256);
 
-    function getAccountSnapshot(address account) 
-        external 
-        view 
-        virtual 
+    function getAccountSnapshot(address account)
+        external
+        view
+        virtual
         returns (
-            uint256, 
-            uint256, 
-            uint256, 
+            uint256,
+            uint256,
+            uint256,
             uint256
         );
 
@@ -292,15 +292,15 @@ abstract contract CTokenInterface is CTokenStorage {
 
     function totalBorrowsCurrent() external virtual returns (uint256);
 
-    function borrowBalanceCurrent(address account) 
-        external 
-        virtual 
+    function borrowBalanceCurrent(address account)
+        external
+        virtual
         returns (uint256);
 
-    function borrowBalanceStored(address account) 
+    function borrowBalanceStored(address account)
         external
-        view 
-        virtual 
+        view
+        virtual
         returns (uint256);
 
     function exchangeRateCurrent() external virtual returns (uint256);
@@ -319,26 +319,26 @@ abstract contract CTokenInterface is CTokenStorage {
 
     /*** Admin Functions ***/
 
-    function _setPendingAdmin(address payable newPendingAdmin) 
-        external 
-        virtual 
+    function _setPendingAdmin(address payable newPendingAdmin)
+        external
+        virtual
         returns (uint256);
 
     function _acceptAdmin() external virtual returns (uint256);
 
-    function _setComptroller(ComptrollerInterface newComptroller) 
-        external 
-        virtual 
+    function _setComptroller(ComptrollerInterface newComptroller)
+        external
+        virtual
         returns (uint256);
 
-    function _setReserveFactor(uint256 newReserveFactorMantissa) 
-        external 
-        virtual 
+    function _setReserveFactor(uint256 newReserveFactorMantissa)
+        external
+        virtual
         returns (uint256);
 
-    function _reduceReserves(uint256 reduceAmount) 
-        external 
-        virtual 
+    function _reduceReserves(uint256 reduceAmount)
+        external
+        virtual
         returns (uint256);
 
     function _setInterestRateModel(InterestRateModel newInterestRateModel) external virtual returns (uint256);
@@ -358,21 +358,21 @@ abstract contract CErc20Interface is CErc20Storage {
 
     function redeem(uint256 redeemTokens) external virtual returns (uint256);
 
-    function redeemUnderlying(uint256 redeemAmount) 
-        external 
-        virtual 
+    function redeemUnderlying(uint256 redeemAmount)
+        external
+        virtual
         returns (uint256);
 
     function borrow(uint256 borrowAmount) external virtual returns (uint256);
 
-    function repayBorrow(uint256 repayAmount) 
-        external 
-        virtual 
+    function repayBorrow(uint256 repayAmount)
+        external
+        virtual
         returns (uint256);
 
-    function repayBorrowBehalf(address borrower, uint256 repayAmount) 
-        external 
-        virtual 
+    function repayBorrowBehalf(address borrower, uint256 repayAmount)
+        external
+        virtual
         returns (uint256);
 
     function liquidateBorrow(

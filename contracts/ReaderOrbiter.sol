@@ -32,20 +32,20 @@ abstract contract IComp {
 
     function getAllMarkets() public view virtual returns (CToken[] memory);
 
-    function getAccountLiquidity(address account) 
-        public 
-        view 
-        virtual 
+    function getAccountLiquidity(address account)
+        public
+        view
+        virtual
         returns (
-            uint256, 
-            uint256, 
+            uint256,
+            uint256,
             uint256
         );
 
-    function checkMembership(address account, CToken cToken) 
-        external 
-        view 
-        virtual 
+    function checkMembership(address account, CToken cToken)
+        external
+        view
+        virtual
         returns (bool);
 }
 
