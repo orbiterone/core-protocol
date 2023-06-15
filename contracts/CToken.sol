@@ -139,12 +139,10 @@ abstract contract CToken is
      * @param amount The number of tokens to transfer
      * @return Whether or not the transfer succeeded
      */
-    function transfer(address dst, uint256 amount)
-        external
-        override
-        nonReentrant
-        returns (bool)
-    {
+    function transfer(
+        address dst,
+        uint256 amount
+    ) external override nonReentrant returns (bool) {
         return transferTokens(msg.sender, msg.sender, dst, amount) == NO_ERROR;
     }
 
@@ -171,11 +169,10 @@ abstract contract CToken is
      * @param amount The number of tokens that are approved (uint256.max means infinite)
      * @return Whether or not the approval succeeded
      */
-    function approve(address spender, uint256 amount)
-        external
-        override
-        returns (bool)
-    {
+    function approve(
+        address spender,
+        uint256 amount
+    ) external override returns (bool) {
         address src = msg.sender;
         transferAllowances[src][spender] = amount;
         emit Approval(src, spender, amount);
@@ -188,12 +185,10 @@ abstract contract CToken is
      * @param spender The address of the account which may transfer tokens
      * @return The number of tokens allowed to be spent (-1 means infinite)
      */
-    function allowance(address owner, address spender)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function allowance(
+        address owner,
+        address spender
+    ) external view override returns (uint256) {
         return transferAllowances[owner][spender];
     }
 
@@ -212,11 +207,9 @@ abstract contract CToken is
      * @param owner The address of the account to query
      * @return The amount of underlying owned by `owner`
      */
-    function balanceOfUnderlying(address owner)
-        external
-        override
-        returns (uint256)
-    {
+    function balanceOfUnderlying(
+        address owner
+    ) external override returns (uint256) {
         Exp memory exchangeRate = Exp({mantissa: exchangeRateCurrent()});
         return mul_ScalarTruncate(exchangeRate, accountTokens[owner]);
     }
@@ -227,17 +220,9 @@ abstract contract CToken is
      * @param account Address of the account to snapshot
      * @return (possible error, token balance, borrow balance, exchange rate mantissa)
      */
-    function getAccountSnapshot(address account)
-        external
-        view
-        override
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
+    function getAccountSnapshot(
+        address account
+    ) external view override returns (uint256, uint256, uint256, uint256) {
         return (
             NO_ERROR,
             accountTokens[account],
@@ -300,12 +285,9 @@ abstract contract CToken is
      * @param account The address whose balance should be calculated after updating borrowIndex
      * @return The calculated balance
      */
-    function borrowBalanceCurrent(address account)
-        external
-        override
-        nonReentrant
-        returns (uint256)
-    {
+    function borrowBalanceCurrent(
+        address account
+    ) external override nonReentrant returns (uint256) {
         accrueInterest();
         return borrowBalanceStored(account);
     }
@@ -315,12 +297,9 @@ abstract contract CToken is
      * @param account The address whose balance should be calculated
      * @return The calculated balance
      */
-    function borrowBalanceStored(address account)
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function borrowBalanceStored(
+        address account
+    ) public view override returns (uint256) {
         return borrowBalanceStoredInternal(account);
     }
 
@@ -329,11 +308,9 @@ abstract contract CToken is
      * @param account The address whose balance should be calculated
      * @return (error code, the calculated balance or 0 if error code is non-zero)
      */
-    function borrowBalanceStoredInternal(address account)
-        internal
-        view
-        returns (uint256)
-    {
+    function borrowBalanceStoredInternal(
+        address account
+    ) internal view returns (uint256) {
         /* Get borrowBalance and borrowIndex */
         BorrowSnapshot storage borrowSnapshot = accountBorrows[account];
 
@@ -536,6 +513,14 @@ abstract contract CToken is
 
         Exp memory exchangeRate = Exp({mantissa: exchangeRateStoredInternal()});
 
+        uint256 _totalSupply = totalSupply;
+        if (_totalSupply == 0) {
+            totalSupply = totalSupply + MINIMUM_LIQUIDITY;
+            accountTokens[DEAD_ADDRESS] = MINIMUM_LIQUIDITY;
+            emit Mint(DEAD_ADDRESS, MINIMUM_LIQUIDITY, MINIMUM_LIQUIDITY);
+            emit Transfer(address(this), DEAD_ADDRESS, MINIMUM_LIQUIDITY);
+        }
+
         /////////////////////////
         // EFFECTS & INTERACTIONS
         // (No safe failures beyond this point)
@@ -554,7 +539,6 @@ abstract contract CToken is
          * We get the current exchange rate and calculate the number of cTokens to be minted:
          *  mintTokens = actualMintAmount / exchangeRate
          */
-
         uint256 mintTokens = div_(actualMintAmount, exchangeRate);
 
         /*
@@ -591,10 +575,9 @@ abstract contract CToken is
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
      * @param redeemAmount The amount of underlying to receive from redeeming cTokens
      */
-    function redeemUnderlyingInternal(uint256 redeemAmount)
-        internal
-        nonReentrant
-    {
+    function redeemUnderlyingInternal(
+        uint256 redeemAmount
+    ) internal nonReentrant {
         accrueInterest();
         // redeemFresh emits redeem-specific logs on errors, so we don't need to
         redeemFresh(payable(msg.sender), 0, redeemAmount);
@@ -707,9 +690,10 @@ abstract contract CToken is
      * @notice Users borrow assets from the protocol to their own address
      * @param borrowAmount The amount of the underlying asset to borrow
      */
-    function borrowFresh(address payable borrower, uint256 borrowAmount)
-        internal
-    {
+    function borrowFresh(
+        address payable borrower,
+        uint256 borrowAmount
+    ) internal {
         /* Fail if borrow not allowed */
         uint256 allowed = comptroller.borrowAllowed(
             address(this),
@@ -778,10 +762,10 @@ abstract contract CToken is
      * @param borrower the account with the debt being payed off
      * @param repayAmount The amount to repay, or -1 for the full outstanding amount
      */
-    function repayBorrowBehalfInternal(address borrower, uint256 repayAmount)
-        internal
-        nonReentrant
-    {
+    function repayBorrowBehalfInternal(
+        address borrower,
+        uint256 repayAmount
+    ) internal nonReentrant {
         accrueInterest();
         // repayBorrowFresh emits repay-borrow-specific logs on errors, so we don't need to
         repayBorrowFresh(msg.sender, borrower, repayAmount);
@@ -1089,11 +1073,9 @@ abstract contract CToken is
      * @param newPendingAdmin New pending admin.
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setPendingAdmin(address payable newPendingAdmin)
-        external
-        override
-        returns (uint256)
-    {
+    function _setPendingAdmin(
+        address payable newPendingAdmin
+    ) external override returns (uint256) {
         // Check caller = admin
         if (msg.sender != admin) {
             revert SetPendingAdminOwnerCheck();
@@ -1143,11 +1125,9 @@ abstract contract CToken is
      * @dev Admin function to set a new comptroller
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setComptroller(ComptrollerInterface newComptroller)
-        public
-        override
-        returns (uint256)
-    {
+    function _setComptroller(
+        ComptrollerInterface newComptroller
+    ) public override returns (uint256) {
         // Check caller is admin
         if (msg.sender != admin) {
             revert SetComptrollerOwnerCheck();
@@ -1171,12 +1151,9 @@ abstract contract CToken is
      * @dev Admin function to accrue interest and set a new reserve factor
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setReserveFactor(uint256 newReserveFactorMantissa)
-        external
-        override
-        nonReentrant
-        returns (uint256)
-    {
+    function _setReserveFactor(
+        uint256 newReserveFactorMantissa
+    ) external override nonReentrant returns (uint256) {
         accrueInterest();
         // _setReserveFactorFresh emits reserve-factor-specific logs on errors, so we don't need to.
         return _setReserveFactorFresh(newReserveFactorMantissa);
@@ -1187,10 +1164,9 @@ abstract contract CToken is
      * @dev Admin function to set a new reserve factor
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setReserveFactorFresh(uint256 newReserveFactorMantissa)
-        internal
-        returns (uint256)
-    {
+    function _setReserveFactorFresh(
+        uint256 newReserveFactorMantissa
+    ) internal returns (uint256) {
         // Check caller is admin
         if (msg.sender != admin) {
             revert SetReserveFactorAdminCheck();
@@ -1222,11 +1198,9 @@ abstract contract CToken is
      * @param addAmount Amount of addition to reserves
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _addReservesInternal(uint256 addAmount)
-        internal
-        nonReentrant
-        returns (uint256)
-    {
+    function _addReservesInternal(
+        uint256 addAmount
+    ) internal nonReentrant returns (uint256) {
         accrueInterest();
 
         // _addReservesFresh emits reserve-addition-specific logs on errors, so we don't need to.
@@ -1240,10 +1214,9 @@ abstract contract CToken is
      * @param addAmount Amount of addition to reserves
      * @return (uint, uint) An error code (0=success, otherwise a failure (see ErrorReporter.sol for details)) and the actual amount added, net token fees
      */
-    function _addReservesFresh(uint256 addAmount)
-        internal
-        returns (uint256, uint256)
-    {
+    function _addReservesFresh(
+        uint256 addAmount
+    ) internal returns (uint256, uint256) {
         // totalReserves + actualAddAmount
         uint256 totalReservesNew;
         uint256 actualAddAmount;
@@ -1284,12 +1257,9 @@ abstract contract CToken is
      * @param reduceAmount Amount of reduction to reserves
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _reduceReserves(uint256 reduceAmount)
-        external
-        override
-        nonReentrant
-        returns (uint256)
-    {
+    function _reduceReserves(
+        uint256 reduceAmount
+    ) external override nonReentrant returns (uint256) {
         accrueInterest();
         // _reduceReservesFresh emits reserve-reduction-specific logs on errors, so we don't need to.
         return _reduceReservesFresh(reduceAmount);
@@ -1301,10 +1271,9 @@ abstract contract CToken is
      * @param reduceAmount Amount of reduction to reserves
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _reduceReservesFresh(uint256 reduceAmount)
-        internal
-        returns (uint256)
-    {
+    function _reduceReservesFresh(
+        uint256 reduceAmount
+    ) internal returns (uint256) {
         // totalReserves - reduceAmount
         uint256 totalReservesNew;
 
@@ -1351,11 +1320,9 @@ abstract contract CToken is
      * @param newInterestRateModel the new interest rate model to use
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setInterestRateModel(InterestRateModel newInterestRateModel)
-        public
-        override
-        returns (uint256)
-    {
+    function _setInterestRateModel(
+        InterestRateModel newInterestRateModel
+    ) public override returns (uint256) {
         accrueInterest();
         // _setInterestRateModelFresh emits interest-rate-model-update-specific logs on errors, so we don't need to.
         return _setInterestRateModelFresh(newInterestRateModel);
@@ -1367,10 +1334,9 @@ abstract contract CToken is
      * @param newInterestRateModel the new interest rate model to use
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setInterestRateModelFresh(InterestRateModel newInterestRateModel)
-        internal
-        returns (uint256)
-    {
+    function _setInterestRateModelFresh(
+        InterestRateModel newInterestRateModel
+    ) internal returns (uint256) {
         // Used to store old model for use in the event that is emitted on success
         InterestRateModel oldInterestRateModel;
 
@@ -1418,10 +1384,10 @@ abstract contract CToken is
      * @dev Performs a transfer in, reverting upon failure. Returns the amount actually transferred to the protocol, in case of a fee.
      *  This may revert due to insufficient balance or insufficient allowance.
      */
-    function doTransferIn(address from, uint256 amount)
-        internal
-        virtual
-        returns (uint256);
+    function doTransferIn(
+        address from,
+        uint256 amount
+    ) internal virtual returns (uint256);
 
     /**
      * @dev Performs a transfer out, ideally returning an explanatory error code upon failure rather than reverting.
