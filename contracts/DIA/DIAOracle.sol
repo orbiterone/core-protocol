@@ -62,11 +62,11 @@ contract DIAOracle is Ownable, PriceOracle {
         _assets[address(cToken)] = key;
     }
 
-    function getUnderlyingPrice(CToken oToken) 
-        public 
-        view 
-        override 
-        returns (uint256) 
+    function getUnderlyingPrice(CToken oToken)
+        public
+        view
+        override
+        returns (uint256)
     {
         string memory key = _assets[address(oToken)];
         string memory symbol = oToken.symbol();

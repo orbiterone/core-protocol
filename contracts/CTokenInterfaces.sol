@@ -341,7 +341,10 @@ abstract contract CTokenInterface is CTokenStorage {
         virtual
         returns (uint256);
 
-    function _setInterestRateModel(InterestRateModel newInterestRateModel) external virtual returns (uint256);
+    function _setInterestRateModel(InterestRateModel newInterestRateModel)
+        external
+        virtual
+        returns (uint256);
 }
 
 contract CErc20Storage {

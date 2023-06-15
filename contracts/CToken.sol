@@ -236,7 +236,7 @@ abstract contract CToken is
             uint256,
             uint256,
             uint256
-        ) 
+        )
     {
         return (
             NO_ERROR,
@@ -562,6 +562,7 @@ abstract contract CToken is
          * We get the current exchange rate and calculate the number of cTokens to be minted:
          *  mintTokens = actualMintAmount / exchangeRate
          */
+         
         uint256 mintTokens = div_(actualMintAmount, exchangeRate);
 
         /*
