@@ -536,6 +536,14 @@ abstract contract CToken is
 
         Exp memory exchangeRate = Exp({mantissa: exchangeRateStoredInternal()});
 
+        uint256 _totalSupply = totalSupply;
+        if (_totalSupply == 0) {
+            totalSupply = totalSupply + MINIMUM_LIQUIDITY;
+            accountTokens[DEAD_ADDRESS] = MINIMUM_LIQUIDITY;
+            emit Mint(DEAD_ADDRESS, MINIMUM_LIQUIDITY, MINIMUM_LIQUIDITY);
+            emit Transfer(address(this), DEAD_ADDRESS, MINIMUM_LIQUIDITY);
+        }
+
         /////////////////////////
         // EFFECTS & INTERACTIONS
         // (No safe failures beyond this point)
@@ -554,7 +562,7 @@ abstract contract CToken is
          * We get the current exchange rate and calculate the number of cTokens to be minted:
          *  mintTokens = actualMintAmount / exchangeRate
          */
-
+         
         uint256 mintTokens = div_(actualMintAmount, exchangeRate);
 
         /*

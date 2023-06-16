@@ -33,6 +33,11 @@ contract CTokenStorage {
     // Maximum fraction of interest that can be set aside for reserves
     uint256 internal constant reserveFactorMaxMantissa = 1e18;
 
+    uint256 internal constant MINIMUM_LIQUIDITY = 1e8;
+
+    address internal constant DEAD_ADDRESS =
+        0x000000000000000000000000000000000000dEaD;
+
     /**
      * @notice Administrator for this contract
      */

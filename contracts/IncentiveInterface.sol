@@ -9,4 +9,16 @@ abstract contract IncentiveInterface {
     function distributeBorrower(address cToken, address borrower)
         external
         virtual;
+
+    mapping(address => mapping(address => uint)) public rewardAccrued;
+
+    mapping(address => mapping(address => uint)) public supplyRewardSpeeds;
+
+    mapping(address => mapping(address => uint)) public borrowRewardSpeeds;
+
+    function getAllSupportIncentives()
+        public
+        view
+        virtual
+        returns (address[] memory);
 }
