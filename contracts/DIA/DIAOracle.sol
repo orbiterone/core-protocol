@@ -17,8 +17,14 @@ contract DIAOracle is Ownable, PriceOracle {
     D2OAdapter D2O_ADAPTER;
 
     event KeySet(address oToken, string key);
+    error PriceTooOld();
 
-    mapping(address => string) internal _assets;
+    struct AssetInfo {
+        string key;
+        uint128 maxTime;
+    }
+
+    mapping(address => AssetInfo) internal _assets;
 
     constructor(address _oracle, address _ksmAdapter, address _d2oAdapter) {
         ORACLE = IDIAOracleV2(_oracle);
@@ -53,25 +59,27 @@ contract DIAOracle is Ownable, PriceOracle {
         D2O_ADAPTER = D2OAdapter(_d2oAdapter);
     }
 
-    function setAsset(string calldata key, CToken cToken) external onlyOwner {
+    function setAsset(
+        string calldata key,
+        uint128 maxTime,
+        CToken cToken
+    ) external onlyOwner {
         require(
             address(cToken) != address(0) && compareStrings(key, "") == false,
             "DIAOracle::setAsset: invalid key"
         );
         emit KeySet(address(cToken), key);
-        _assets[address(cToken)] = key;
+        _assets[address(cToken)] = AssetInfo({key: key, maxTime: maxTime});
     }
 
-    function getUnderlyingPrice(CToken oToken)
-        public
-        view
-        override
-        returns (uint256)
-    {
-        string memory key = _assets[address(oToken)];
+    function getUnderlyingPrice(
+        CToken oToken
+    ) public view override returns (uint256 priceLast) {
+        AssetInfo memory info = _assets[address(oToken)];
         string memory symbol = oToken.symbol();
         uint256 decimal = 18;
-        uint256 priceLast = 0;
+        uint128 timestamp = 0;
+        uint128 price = 0;
         if (
             compareStrings(symbol, "oMOVR") == false &&
             compareStrings(symbol, "oGLMR") == false
@@ -86,21 +94,28 @@ contract DIAOracle is Ownable, PriceOracle {
             priceLast = KSM_ADAPTER.wstKSMPrice();
         } else if (compareStrings(symbol, "od2O")) {
             priceLast = D2O_ADAPTER.getPrice("USDC");
+            (, timestamp) = D2O_ADAPTER.getValue("USDC");
         } else {
-            (uint128 price, ) = ORACLE.getValue(key);
+            (price, timestamp) = ORACLE.getValue(info.key);
             priceLast = uint256(price);
         }
+        if (timestamp > 0) {
+            bool inTime = ((block.timestamp - timestamp) < info.maxTime)
+                ? true
+                : false;
 
-        priceLast = uint256(priceLast).mul(10**(36 - 8 - decimal));
+            if (!inTime) revert PriceTooOld();
+        }
+
+        priceLast = uint256(priceLast).mul(10 ** (36 - 8 - decimal));
 
         return priceLast;
     }
 
-    function compareStrings(string memory a, string memory b)
-        internal
-        pure
-        returns (bool)
-    {
+    function compareStrings(
+        string memory a,
+        string memory b
+    ) internal pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) ==
             keccak256(abi.encodePacked((b))));
     }
