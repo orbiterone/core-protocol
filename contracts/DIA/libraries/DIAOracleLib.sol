@@ -11,4 +11,6 @@ interface WSTKsmAdapter {
 
 interface D2OAdapter {
     function getPrice(string memory key) external view returns (uint256);
+
+    function getValue(string memory) external view returns (uint128, uint128);
 }
