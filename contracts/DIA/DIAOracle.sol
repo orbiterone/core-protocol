@@ -112,10 +112,11 @@ contract DIAOracle is Ownable, PriceOracle {
         return priceLast;
     }
 
-    function compareStrings(
-        string memory a,
-        string memory b
-    ) internal pure returns (bool) {
+    function compareStrings(string memory a, string memory b)
+        internal
+        pure
+        returns (bool)
+    {
         return (keccak256(abi.encodePacked((a))) ==
             keccak256(abi.encodePacked((b))));
     }
