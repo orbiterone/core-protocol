@@ -7,6 +7,7 @@ import "./IncentiveInterface.sol";
 import "./CTokenInterfaces.sol";
 import "./EIP20Interface.sol";
 import "./ExponentialNoError.sol";
+import "./Lottery/interfaces/IOrbitLottery.sol";
 
 abstract contract IComp {
     struct Market {
@@ -32,25 +33,20 @@ abstract contract IComp {
 
     function getAllMarkets() public view virtual returns (CToken[] memory);
 
-    function getAccountLiquidity(address account)
-        public
-        view
-        virtual
-        returns (
-            uint256,
-            uint256,
-            uint256
-        );
+    function getAccountLiquidity(
+        address account
+    ) public view virtual returns (uint256, uint256, uint256);
 
-    function checkMembership(address account, CToken cToken)
-        external
-        view
-        virtual
-        returns (bool);
+    function checkMembership(
+        address account,
+        CToken cToken
+    ) external view virtual returns (bool);
 }
 
 contract ReaderOrbiter is Ownable, ExponentialNoError {
     IComp comptroller;
+
+    IOrbitLottery lottery;
 
     struct IncentiveInfo {
         string tokenName;
@@ -93,8 +89,23 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
         Exp tokensToDenom;
     }
 
-    constructor(address _comptroller) {
+    struct TicketsInfo {
+        uint256 ticketId;
+        uint32 ticketNumber;
+        bool claimStatus;
+        bool winning;
+        bool[] matches;
+    }
+
+    struct LotteryInfoByAccount {
+        uint256 totalTickets;
+        uint256 winningTickets;
+        TicketsInfo[] tickets;
+    }
+
+    constructor(address _comptroller, address _lottery) {
         comptroller = IComp(_comptroller);
+        lottery = IOrbitLottery(_lottery);
     }
 
     function setComptroller(address _comptroller) external onlyOwner {
@@ -104,6 +115,15 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
         );
 
         comptroller = IComp(_comptroller);
+    }
+
+    function setLottery(address _lottery) external onlyOwner {
+        require(
+            IOrbitLottery(_lottery).viewCurrentLotteryId() > 0,
+            "ReaderOrbiter::setLottery: contract is not lottery"
+        );
+
+        lottery = IOrbitLottery(_lottery);
     }
 
     function incentives(
@@ -268,5 +288,61 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
         }
 
         return (marketInfo, supplied, borrowed);
+    }
+
+    function ticketsUserByLottery(
+        address _account,
+        uint256 _lotteryId,
+        uint256 _countTickets
+    ) external view returns (LotteryInfoByAccount memory) {
+        LotteryInfoByAccount memory vars;
+
+        (
+            uint256[] memory ticketIds,
+            uint32[] memory ticketNumbers,
+            bool[] memory ticketStatuses,
+
+        ) = lottery.viewUserInfoForLotteryId(
+                _account,
+                _lotteryId,
+                0,
+                _countTickets
+            );
+
+        if (ticketIds.length > 0) {
+            vars.totalTickets = ticketIds.length;
+
+            for (uint256 i = 0; i < ticketIds.length; i++) {
+                uint256 ticketId = ticketIds[i];
+
+                vars.tickets[i] = TicketsInfo({
+                    ticketId: ticketId,
+                    ticketNumber: ticketNumbers[i],
+                    claimStatus: ticketStatuses[i],
+                    winning: false,
+                    matches: new bool[](ticketIds.length)
+                });
+
+                for (uint32 bracket = 0; bracket <= 5; bracket++) {
+                    uint256 checkReward = lottery.viewRewardsForTicketId(
+                        _lotteryId,
+                        ticketId,
+                        bracket
+                    );
+                    vars.tickets[i].matches[bracket] = checkReward > 0
+                        ? true
+                        : false;
+
+                    if (checkReward > 0) {
+                        vars.tickets[i].winning = true;
+                    }
+                }
+                if (vars.tickets[i].winning) {
+                    vars.winningTickets++;
+                }
+            }
+        }
+
+        return vars;
     }
 }
