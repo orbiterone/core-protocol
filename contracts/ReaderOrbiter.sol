@@ -300,7 +300,8 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
     function ticketsUserByLottery(
         address _account,
         uint256 _lotteryId,
-        uint256 _countTickets
+        uint256 _cursor,
+        uint256 _size
     ) external view returns (LotteryInfoByAccount memory) {
         LotteryInfoByAccount memory vars;
 
@@ -312,12 +313,13 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
         ) = lottery.viewUserInfoForLotteryId(
                 _account,
                 _lotteryId,
-                0,
-                _countTickets
+                _cursor,
+                _size
             );
 
         if (ticketIds.length > 0) {
             vars.totalTickets = ticketIds.length;
+            vars.tickets = new TicketsInfo[](ticketIds.length);
 
             for (uint256 i = 0; i < ticketIds.length; i++) {
                 uint256 ticketId = ticketIds[i];
@@ -327,7 +329,7 @@ contract ReaderOrbiter is Ownable, ExponentialNoError {
                     ticketNumber: ticketNumbers[i],
                     claimStatus: ticketStatuses[i],
                     winning: false,
-                    matches: new bool[](ticketIds.length)
+                    matches: new bool[](6)
                 });
 
                 for (uint32 bracket = 0; bracket <= 5; bracket++) {
