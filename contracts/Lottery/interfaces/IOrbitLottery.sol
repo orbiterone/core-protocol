@@ -8,10 +8,8 @@ interface IOrbitLottery {
      * @param _ticketNumbers: array of ticket numbers between 1,000,000 and 1,999,999
      * @dev Callable by users
      */
-    function buyTickets(
-        uint256 _lotteryId,
-        uint32[] calldata _ticketNumbers
-    ) external;
+    function buyTickets(uint256 _lotteryId, uint32[] calldata _ticketNumbers)
+        external;
 
     /**
      * @notice Claim a set of winning tickets for a lottery
