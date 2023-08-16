@@ -8,10 +8,8 @@ interface IOrbitLottery {
      * @param _ticketNumbers: array of ticket numbers between 1,000,000 and 1,999,999
      * @dev Callable by users
      */
-    function buyTickets(
-        uint256 _lotteryId,
-        uint32[] calldata _ticketNumbers
-    ) external;
+    function buyTickets(uint256 _lotteryId, uint32[] calldata _ticketNumbers)
+        external;
 
     /**
      * @notice Claim a set of winning tickets for a lottery
@@ -73,22 +71,6 @@ interface IOrbitLottery {
      * @notice View current lottery id
      */
     function viewCurrentLotteryId() external returns (uint256);
-
-    function viewRewardsForTicketId(
-        uint256 _lotteryId,
-        uint256 _ticketId,
-        uint32 _bracket
-    ) external view returns (uint256);
-
-    function viewUserInfoForLotteryId(
-        address _user,
-        uint256 _lotteryId,
-        uint256 _cursor,
-        uint256 _size
-    )
-        external
-        view
-        returns (uint256[] memory, uint32[] memory, bool[] memory, uint256);
 }
 
 interface IRandomNumberGenerator {
